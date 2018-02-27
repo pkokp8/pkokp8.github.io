@@ -30,10 +30,10 @@ print("%s %s" % (listb, id(listb)))
 </pre>
 
 <p>
-两个list是同一个，这肯定不行。目的就是为了新建一个list，并且修改新建的list不能影响之前的list    
+看得出，id相同。说明了两个list其实是同一个引用，这肯定不行。目的是为了新建一个list，同时修改新建的list不影响之前的list    
 </p>
 <p>
-一种办法很粗暴：用for循环遍历旧的list，新建一个空list，然后通过append方法把每一个元素添加进新的list。于是代码就是：
+有一种办法很粗暴：for循环遍历旧的list，新建一个空list，然后通过append方法把每一个元素添加进新的list。于是代码就是：
 </p>
 <pre>
 listnew=[]
@@ -41,23 +41,23 @@ for i in listold:
     listnew.append(i)
 </pre>
 <p>
-这个类似于c语言中写出这样的代码:
+这个方法类似于在c语言中写出这样的代码:
 </p>
 <pre>
 char old[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 char new[10];
 int i = 0;
-for(i = 0;i < sizeof(old)/sizeof(char), i++)
+for(i = 0;i < sizeof(old)/sizeof(char); i++)
 {
 	new[i] = old[i];
 }
 </pre>
-<p>你退群吧。除非要对每个变量进行处理（例如对一张yuv图像进行转换成rgb图像，就需要遍历数组的所有变量），否则遍历有什么意义？memcpy()不行吗</p>
-<p>python有很多巧妙方法，例如：</p>
+<p>你退群吧。除非要对数组每个成员进行处理，否则遍历有什么意义，memcpy()不行吗？</p>
+<p>而对于python来说，复制一个list有一些巧妙方法，例如：</p>
 <pre>
 listnew = listold*1
 </pre>
-<p>当然，还有很多方法，这里举点例子：</p>
+<p>这里举点其他方法的例子：</p>
 <pre>
 lista = [0, 1, 2, 3, 4]
 print("a %s %s" % (lista, id(lista)))
@@ -78,14 +78,14 @@ for i in lista:
 print("c %s %s" % (listc, id(listc)))
 
 listd=[]
-listd=lista[:] 					#slice
+listd=lista[:]					#slice
 print("d %s %s" % (listd, id(listd)))
 
 import copy
 liste = copy.copy(lista)
 print("e %s %s" % (liste, id(liste)))
 
-listf = [i for i in lista]		#列表生成式
+listf = [i for i in lista]			#列表生成式
 print("f %s %s" % (listf, id(listf)))
 
 
@@ -99,4 +99,4 @@ e [0, 1, 2, 3, 4] 40818008
 f [0, 1, 2, 3, 4] 40819608
 </pre>
 
-此外，list中带有list，此时list就涉及了深拷贝和浅拷贝。不过这次先不考虑这个。还没到需要写list中带list的代码。用到了再学吧。
+此外，如果list中带有list，list的拷贝就涉及了深拷贝和浅拷贝的知识点。不过这次先不考虑这个。还没到需要写list中带list的代码。用到了再学吧。
