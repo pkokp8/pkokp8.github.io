@@ -3,8 +3,8 @@
 	<channel>
 		<title>“pkokp8's Blog” - Articles</title>
 		<description>只想在这个世界多搬点砖，如果能造一块那就太好了</description>
-		<link>https://pkokp8.github.io/</link>
-		<atom:link href="https://pkokp8.github.io//feed.articles.xml" rel="self" type="application/rss+xml" />
+		<link>http://localhost:4000</link>
+		<atom:link href="http://localhost:4000/feed.articles.xml" rel="self" type="application/rss+xml" />
 		
 			
 			<item>
@@ -139,8 +139,8 @@ f [0, 1, 2, 3, 4] 40819608
 </description>
 				
 				<pubDate>Tue, 27 Feb 2018 00:00:00 +0800</pubDate>
-				<link>https://pkokp8.github.io//python-copy-list</link>
-				<guid isPermaLink="true">https://pkokp8.github.io//python-copy-list</guid>
+				<link>http://localhost:4000/python-copy-list</link>
+				<guid isPermaLink="true">http://localhost:4000/python-copy-list</guid>
 			</item>
 			
 		
@@ -153,8 +153,8 @@ c语言就是个;&lt;/p&gt;
 </description>
 				
 				<pubDate>Sat, 01 Jan 2011 00:00:00 +0800</pubDate>
-				<link>https://pkokp8.github.io//test1-test2-test3</link>
-				<guid isPermaLink="true">https://pkokp8.github.io//test1-test2-test3</guid>
+				<link>http://localhost:4000/test1-test2-test3</link>
+				<guid isPermaLink="true">http://localhost:4000/test1-test2-test3</guid>
 			</item>
 			
 		
@@ -167,8 +167,8 @@ c语言就是个;&lt;/p&gt;
 </description>
 				
 				<pubDate>Sat, 01 Jan 2011 00:00:00 +0800</pubDate>
-				<link>https://pkokp8.github.io//test1-test2-test3</link>
-				<guid isPermaLink="true">https://pkokp8.github.io//test1-test2-test3</guid>
+				<link>http://localhost:4000/test1-test2-test3</link>
+				<guid isPermaLink="true">http://localhost:4000/test1-test2-test3</guid>
 			</item>
 			
 		
