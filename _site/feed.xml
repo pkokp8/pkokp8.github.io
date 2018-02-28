@@ -8,6 +8,110 @@
 		
 			
 			<item>
+				<title>git的简单操作</title>
+				
+					<description>&lt;p&gt;
+  记录一下git的使用。系统是ubuntu16.04. 安装好git环境  
+  首先在github上右上角点一下+，然后New repository。  
+  也可以本地创建好后push上去，不过这样也挺方便的。初学者嘛
+&lt;/p&gt;
+
+
+
+
+&lt;p&gt;
+  然后是clone一个master，例如刚才创建的pkokp8.github.io.git分支
+&lt;/p&gt;
+
+
+&lt;pre&gt;
+# git clone https://github.com/pkokp8/pkokp8.github.io.git
+&lt;/pre&gt;
+
+
+
+
+&lt;p&gt;接着就可以修改、提交文件&lt;/p&gt;
+
+
+&lt;pre&gt;
+# echo &quot;# test info&quot; &gt;&gt; README.md           #新建README.md
+# git add .                                 #本地仓库新增这个文件
+# git commit -m &quot;commit the readme&quot;         #提交到本地，日志为-m后面&quot;&quot;内的字符串
+# git push -u origin master                 #push到远程主线。此时可以使用reset来回退代码，这样远端就不会有这次commit的记录
+&lt;/pre&gt;
+
+
+
+
+&lt;p&gt;
+  此时可能因为没有用户名和密码，会提示错误。可以配置后再执行上述命令
+&lt;/p&gt;
+
+
+
+
+&lt;pre&gt;
+# git config --global user.name &quot;pkokp8&quot;
+# git config --global user.email &quot;xxx@xx.com&quot;
+&lt;/pre&gt;
+
+
+
+
+&lt;p&gt;
+  查看本地的提交记录，简单的可以使用。配合reset可以回退版本。注意-hard会把本地修改覆盖掉。  
+  类似svn的svn revert ./ -R;svn up -r xxx
+&lt;/p&gt;
+
+
+&lt;pre&gt;
+# git log
+commit af17a9f424c5da5b4b06f90e69eb069f89124e40
+Author: pkokp8 &lt;xxx@xx.com&gt;
+Date:   Thu Mar 1 00:23:55 2018 +0800
+
+    modify readme
+
+# git reset -hard af17a9f424c5da5b4b06f90e69eb069f89124e40 
+&lt;/pre&gt;
+
+
+
+
+&lt;p&gt;
+  接着就可以创建分支了：
+&lt;/p&gt;
+
+
+&lt;pre&gt;
+# git branch firstversion                   #创建名为firstversion的分支
+# git checkout firstversion                 #切换到这个分支
+# git push -u origin firstversion           #把这个分支push到远端
+# git checkout master                       #切换回主线
+# git branch                                #查看当前处于哪条分支（看*），以及存在哪些分支
+  firstversion
+* master
+# git diff                                  #查看本地与本地仓库之间的差异
+&lt;/pre&gt;
+
+
+
+
+&lt;p&gt;
+  暂时就用到这么多。我感觉我还是要学习一个
+&lt;/p&gt;
+
+</description>
+				
+				<pubDate>Thu, 01 Mar 2018 00:00:00 +0800</pubDate>
+				<link>http://localhost:4000/git-simple-use</link>
+				<guid isPermaLink="true">http://localhost:4000/git-simple-use</guid>
+			</item>
+			
+		
+			
+			<item>
 				<title>复制一个list</title>
 				
 					<description>&lt;p&gt;初学python，爬图片的时候想复制一个list。一开始以为可以直接用这种方式复制list：

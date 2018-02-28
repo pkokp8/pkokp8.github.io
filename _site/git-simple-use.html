@@ -6,7 +6,7 @@
     * Revised:        pkokp8
     -->
     <meta charset="utf-8" />
-    <title>复制一个list | pkokp8's blog</title>
+    <title>git的简单操作 | pkokp8's blog</title>
     <meta name="author" content="pkokp8" />
     <meta name="renderer" content="webkit">
     <meta name="description" content="Everything about pkokp8" />
@@ -47,134 +47,100 @@
 
 <div id="content">
     <div class="entry">
-        <h1 class="entry-title"><a href="/python-copy-list" title="复制一个list">复制一个list</a></h1>
-        <p class="entry-date">2018-02-27</p>
-        <p>初学python，爬图片的时候想复制一个list。一开始以为可以直接用这种方式复制list：
+        <h1 class="entry-title"><a href="/git-simple-use" title="git的简单操作">git的简单操作</a></h1>
+        <p class="entry-date">2018-03-01</p>
+        <p>
+  记录一下git的使用。系统是ubuntu16.04. 安装好git环境  
+  首先在github上右上角点一下+，然后New repository。  
+  也可以本地创建好后push上去，不过这样也挺方便的。初学者嘛
 </p>
 
 
 
 
+<p>
+  然后是clone一个master，例如刚才创建的pkokp8.github.io.git分支
+</p>
+
+
 <pre>
-lista=[xxx, yyy, zzz]
-listb=lista
+# git clone https://github.com/pkokp8/pkokp8.github.io.git
 </pre>
 
 
 
 
-<p>后来发现修改listb后lista的值也被修改了。原因是实际上listb就是lista。</p>
-
-
-<p>可以尝试用id函数打印出两个list的内存地址:</p>
+<p>接着就可以修改、提交文件</p>
 
 
 <pre>
-lista = [0, 1, 2, 3, 4]
-print("%s %s" % (lista, id(lista)))
-
-listb = lista
-print("%s %s" % (listb, id(listb)))
-
-=============================
-[0, 1, 2, 3, 4] 8246256
-[0, 1, 2, 3, 4] 8246256
-
+# echo "# test info" >> README.md           #新建README.md
+# git add .                                 #本地仓库新增这个文件
+# git commit -m "commit the readme"         #提交到本地，日志为-m后面""内的字符串
+# git push -u origin master                 #push到远程主线。此时可以使用reset来回退代码，这样远端就不会有这次commit的记录
 </pre>
 
 
 
 
 <p>
-看得出，id相同。说明了两个list其实是同一个引用，这肯定不行。目的是为了新建一个list，同时修改新建的list不影响之前的list    
+  此时可能因为没有用户名和密码，会提示错误。可以配置后再执行上述命令
 </p>
+
+
+
+
+<pre>
+# git config --global user.name "pkokp8"
+# git config --global user.email "xxx@xx.com"
+</pre>
+
+
 
 
 <p>
-有一种办法很粗暴：for循环遍历旧的list，新建一个空list，然后通过append方法把每一个元素添加进新的list。于是代码就是：
+  查看本地的提交记录，简单的可以使用。配合reset可以回退版本。注意-hard会把本地修改覆盖掉。  
+  类似svn的svn revert ./ -R;svn up -r xxx
 </p>
 
 
 <pre>
-listnew=[]
-for i in listold:
-    listnew.append(i)
+# git log
+commit af17a9f424c5da5b4b06f90e69eb069f89124e40
+Author: pkokp8 <xxx@xx.com>
+Date:   Thu Mar 1 00:23:55 2018 +0800
+
+    modify readme
+
+# git reset -hard af17a9f424c5da5b4b06f90e69eb069f89124e40 
 </pre>
+
+
 
 
 <p>
-这个方法类似于在c语言中写出这样的代码:
+  接着就可以创建分支了：
 </p>
 
 
 <pre>
-char old[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-char new[10];
-int i = 0;
-for(i = 0;i < sizeof(old)/sizeof(char); i++)
-{
-    new[i] = old[i];
-}
+# git branch firstversion                   #创建名为firstversion的分支
+# git checkout firstversion                 #切换到这个分支
+# git push -u origin firstversion           #把这个分支push到远端
+# git checkout master                       #切换回主线
+# git branch                                #查看当前处于哪条分支（看*），以及存在哪些分支
+  firstversion
+* master
+# git diff                                  #查看本地与本地仓库之间的差异
 </pre>
 
 
-<p>你退群吧。除非要对数组每个成员进行处理，否则遍历有什么意义，memcpy()不行吗？</p>
 
 
-<p>而对于python来说，复制一个list有一些巧妙方法，例如：</p>
+<p>
+  暂时就用到这么多。我感觉我还是要学习一个
+</p>
 
-
-<pre>
-listnew = listold*1
-</pre>
-
-
-<p>这里举点其他方法的例子：</p>
-
-
-<pre>
-lista = [0, 1, 2, 3, 4]
-print("a %s %s" % (lista, id(lista)))
-
-lista_ = lista                  #实际没有复制
-print("a_ %s %s" % (lista_, id(lista_)))
-
-'''
-以下是复制
-'''
-
-listb = lista*1
-print("b %s %s" % (listb, id(listb)))
-
-listc=[]
-for i in lista:
-    listc.append(i)             #append方法
-print("c %s %s" % (listc, id(listc)))
-
-listd=[]
-listd=lista[:]                  #slice
-print("d %s %s" % (listd, id(listd)))
-
-import copy
-liste = copy.copy(lista)
-print("e %s %s" % (liste, id(liste)))
-
-listf = [i for i in lista]          #列表生成式
-print("f %s %s" % (listf, id(listf)))
-
-
-========================================
-a [0, 1, 2, 3, 4] 40817648
-a_ [0, 1, 2, 3, 4] 40817648
-b [0, 1, 2, 3, 4] 40735088
-c [0, 1, 2, 3, 4] 40817568
-d [0, 1, 2, 3, 4] 40818648
-e [0, 1, 2, 3, 4] 40818008
-f [0, 1, 2, 3, 4] 40819608
-</pre>
-
-
-<p>此外，如果list中带有list，list的拷贝就涉及了深拷贝和浅拷贝的知识点。不过这次先不考虑这个。还没到需要写list中带list的代码。用到了再学吧。</p>
 
         <div id="disqus_container">
             <class="comment"/>
