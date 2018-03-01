@@ -1,7 +1,7 @@
 ---
 layout:     post
-title: git的简单操作
-description: 记录我从零开始学git的一些命令
+title: 剑指offer学习
+description: 想换工作了。。。
 category: blog
 ---
 ---
