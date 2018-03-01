@@ -4,12 +4,6 @@ title: 剑指offer学习
 description: 想换工作了。。。
 category: blog
 ---
----
-layout:     post
-title: 看《剑指offer》的记录
-description: 记录书中学到的一些东西
-category: blog
----
 <p>
   对于第一章面试相关的技巧，结合自身之前面试的几次经验，记录几个比较重要的：  
   1.电话。投递简历后一般HR都是电话联系。可以记录一些有用的信息，然后让HR发一个邮件给你。例如联系方式、何时何地面试，有什么需要准备的等等.  
