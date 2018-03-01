@@ -21,8 +21,8 @@ category: blog
 <pre>
 # echo "# test info" >> README.md           #新建README.md
 # git add .                                 #本地仓库新增这个文件
-# git commit -m "commit the readme"         #提交到本地，日志为-m后面""内的字符串
-# git push -u origin master                 #push到远程主线。此时可以使用reset来回退代码，这样远端就不会有这次commit的记录
+# git commit -m "commit the readme"         #提交到本地，日志为-m后面""内的字符串。万一commit错误，可以不进行下一步，直接使用reset来回退代码，这样远端就不会有这次commit的记录
+# git push -u origin master                 #push到远程主线。
 </pre>
 
 <p>
