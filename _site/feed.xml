@@ -8,6 +8,349 @@
 		
 			
 			<item>
+				<title>颜色渐变</title>
+				
+					<description>&lt;p&gt;
+  某天，打开了windows附件的画图工具。想选用一种颜色，点到了编辑颜色的地方。&lt;/br&gt;
+  发现这颜色渐变很神奇，横向纵向的颜色都是变化的。于是决定写一份代码来实现这个颜色渐变的功能。
+&lt;/p&gt;
+
+
+
+
+&lt;p&gt;
+  用c语言。&lt;/br&gt;
+  生成一副rgb数据的图像。&lt;/br&gt;
+  话不多说，上代码。
+&lt;/p&gt;
+
+
+
+
+&lt;pre&gt;
+#include &amp;lt;stdio.h&amp;gt;
+
+#define WIDTH 1920
+#define HEIGHT 1080
+unsigned char dstrgb24[WIDTH*HEIGHT*3] = {0};
+
+
+typedef enum _CHANG{
+    ADDGERRN    = 1,
+    MINUSRED    = 2,
+    ADDBLUE     = 3,
+    MINUSGREEN  = 4,
+    ADDRED      = 5,
+    MINUSBLUE   = 6,
+    BUTT
+}CHANGE;
+
+int gwidth = WIDTH;
+int gheight = HEIGHT;
+
+#define abs(x) ((x)&lt;0?(-1*(x)):(x))
+int main()
+{
+    int pixel = 0;
+    int x = 0;
+    int y = 0;
+    int startr, startg, startb;
+    int endr, endg, endb;
+    CHANGE flag = BUTT;
+    for(y = 0; y &lt; gheight; y++)
+    {
+        int r,g,b;
+        startr = (-127) * y / gheight + 255;
+        startg = y * 127 / gheight;
+        startb = y * 127 / gheight;
+        endr = 255 - startr;
+        endg = 255 - startg;
+        endb = 255 - startg;
+
+        r = startr;
+        g = startg;
+        b = startb;
+        flag = ADDGERRN;
+        int cnt = 0;
+        for(x = 0; x &lt; gwidth; x++)
+        {
+            double stepw = abs((endr - startr)) / (gwidth * 1.0);
+            if(flag == ADDGERRN)
+            {
+                g = startg + (int)(stepw * (BUTT - 1) * cnt);
+                cnt++;
+                if(g &gt;= endg)
+                {
+                    cnt = 0;
+                    g = endg;
+                    flag++;
+                }
+            }
+            else if(flag == MINUSRED)
+            {
+                r = startr - (int)(stepw * (BUTT - 1) * cnt);
+                cnt++;
+                if(r &lt;= endr)
+                {
+                    cnt = 0;
+                    r = endr;
+                    flag++;
+                }
+            }
+            else if(flag == ADDBLUE)
+            {
+                b = startb + (int)(stepw * (BUTT - 1) * cnt);
+                cnt++;
+                if(b &gt;= endb)
+                {
+                    cnt = 0;
+                    b = endb;
+                    flag++;
+                }
+            }
+            else if(flag == MINUSGREEN)
+            {
+                g = endg - (int)(stepw * (BUTT - 1) * cnt);
+                cnt++;
+                if(g &lt;= startg)
+                {
+                    cnt = 0;
+                    g = startg;
+                    flag++;
+                }
+            }
+            else if(flag == ADDRED)
+            {
+                r = endr + (int)(stepw * (BUTT - 1) * cnt);
+                cnt++;
+                if(r &gt;= startr)
+                {
+                    cnt = 0;
+                    r = startr;
+                    flag++;
+                }
+            }
+            else if(flag == MINUSBLUE)
+            {
+                b = endb - (int)(stepw * (BUTT - 1) * cnt);
+                cnt++;
+                if(b &lt;= startb)
+                {
+                    cnt = 0;
+                    b = startb;
+                    flag++;
+                }
+            }
+            else
+            {
+                //printf(&quot;???\n&quot;);
+            }
+
+            dstrgb24[pixel++] = r;
+            dstrgb24[pixel++] = g;
+            dstrgb24[pixel++] = b;
+        }
+    }
+    FILE *fp = fopen(&quot;color.rgb&quot;, &quot;w+&quot;);
+    if(fp != NULL)
+    {
+        fwrite(dstrgb24, gwidth * gheight * 3, 1, fp);
+        fclose(fp);
+    }
+    printf(&quot;%d\n&quot;, pixel);
+    return 0;
+
+}
+
+&lt;/pre&gt;
+
+
+
+
+&lt;pre&gt;
+[root@sf_share]# gcc color.c 
+[root@sf_share]# ./a.out 
+6220800
+[root@sf_share]# ls color.rgb 
+color.rgb
+
+&lt;/pre&gt;
+
+
+&lt;p&gt;&lt;img src=&quot;/images/color.png&quot; alt=&quot;avatar&quot; /&gt;&lt;/p&gt;
+</description>
+				
+				<pubDate>Thu, 08 Mar 2018 00:00:00 +0800</pubDate>
+				<link>http://localhost:4000/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86-%E9%A2%9C%E8%89%B2%E6%B8%90%E5%8F%98-c</link>
+				<guid isPermaLink="true">http://localhost:4000/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86-%E9%A2%9C%E8%89%B2%E6%B8%90%E5%8F%98-c</guid>
+			</item>
+			
+		
+			
+			<item>
+				<title>libjpeg不完全解</title>
+				
+					<description>&lt;p&gt;
+  占位，还没完成
+&lt;/p&gt;
+
+
+
+</description>
+				
+				<pubDate>Mon, 05 Mar 2018 00:00:00 +0800</pubDate>
+				<link>http://localhost:4000/libjpeg-decode-c</link>
+				<guid isPermaLink="true">http://localhost:4000/libjpeg-decode-c</guid>
+			</item>
+			
+		
+			
+			<item>
+				<title>剑指offer学习</title>
+				
+					<description>&lt;p&gt;
+  对于第一章面试相关的技巧，结合自身之前面试的几次经验，记录几个比较重要的：  &lt;/br&gt;
+  1.电话。投递简历后一般HR都是电话联系。可以记录一些有用的信息，然后让HR发一个邮件给你。例如联系方式、何时何地面试，有什么需要准备的等等.  &lt;/br&gt;
+  2.准备问题。面试会有HR面，技术面，老大面等等。提前想好针对谁可以问什么问题，以及面试过程中记住对方说的可以针对性的问。切忌问错人。我组长之前面试一个人回来后和我说他还问加不加班，印象不好。虽然我对这一点不予置评，但可见还是需要准备好问题的.  &lt;/br&gt;
+  3.自我介绍。面试者可能之前都不知道有要面试你这个任务，所以会让你简述一下自己。此时对于技术面可以加入项目、学习工作经历。切忌说完全不懂的，因为可能技术面会深入的问一两个问题  &lt;/br&gt;
+  4.书中讲介绍项目可以用“项目背景-完成任务-为了完成任务做了什么怎么做的-贡献”。此外还需要准备这个项目中遇到了什么大问题、怎么解决的、学到了什么。  &lt;/br&gt;
+  5.“精通”是个很傻缺的词汇。  &lt;/br&gt;
+  6.必须准备的答案：自我介绍、项目介绍、为什么跳槽。时刻注意解决问题要有清晰的思路。  &lt;/br&gt;
+  
+&lt;/p&gt;
+
+
+
+
+&lt;p&gt;
+  第二章开始就是一些基本知识了。这里记录一下自己思考、参考后写出的面试题C语言的答案
+&lt;/p&gt;
+
+
+&lt;pre&gt;
+//面试题1、2不适合C语言答题。因此从3开始
+//第三题的二位数组是行从小到大排序，列从小到大排序。
+//从第一行的最后一列开始匹配，当前值大于查找值，可以排除当前列。因此列自减
+//当前值小于查找值，可以排除当前行。因此行自增
+//如果相等，则找到了。
+//别忘了对边界条件进行判定
+#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;string.h&amp;gt;
+
+int arry[5][5] =
+{
+    {1,3,4,7,8},
+    {2,5,6,9,11},
+    {10,90,93,101,231},
+    {25,57,59,99,103},
+    {60,63,89,333,777}
+};
+
+
+int find(int str[5][5], int rows, int columns, int number)
+{
+    int r = 0;                      //行
+    int c = 0;                      //列
+    if(str == NULL &amp;&amp; rows &gt; 0 &amp;&amp; columns &gt; 0)
+        return -1;
+
+    r = 0;                          //行从0开始
+    c = columns - 1;                //列从最后一列开始
+    while(r&lt;rows &amp;&amp; c &gt;= 0)
+    {
+        if(str[r][c] == number)
+            return 1;
+        else if(str[r][c] &lt; number)
+        {
+            r++;
+        }
+        else if(str[r][c] &gt; number)
+        {
+            c--;
+        }
+    }
+    return 0;
+}
+
+int main()
+{
+    int ret = find(arry, 5, 5, 6);
+    printf(&quot;%d\n&quot;, ret);
+    return 0;
+}
+&lt;/pre&gt;
+
+
+
+
+&lt;pre&gt;
+//第四题是查找替换空格。把整个字符串的空格替换成%20
+//算法有两种。
+//1.遇到一个空格就把后面的全部往后推3个。然后加入%20
+//2.先扫描一遍有多少空格。然后结果字符串长度是本身长度+空格数*2。从后往前，遇到空格就在最后加'0','2','%'.普通字符直接复制到最后
+//1简单。但建议用2，2需要两个指针，指向原字符串的最后，以及结果字符串的最后。然后往前遍历
+#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;string.h&amp;gt;
+
+char string[1000] = &quot;dsaf fdsfj ewq ck;lskffds sf s  sdfs sdf   fsdf   &quot;;
+
+int replaceblank(char *str)
+{
+    unsigned int u32blankcnt = 0;
+    int i = 0;
+    for(i = 0; i &lt; strlen(str) + 1; i++ )
+    {
+        if(str[i] == ' ')
+            u32blankcnt++;
+    }
+    unsigned int u32strlen = strlen(str);
+    unsigned int u32retlen = u32strlen + u32blankcnt*2;
+    char *pcurstr = &amp;(str[0]);
+    char *pretstr = &amp;(str[0]);
+    int j = 0;
+    for(i = u32strlen, j = u32retlen; i &gt;=0; i--)
+    {
+        if(pcurstr[i] != ' ')
+        {
+            pretstr[j--] = pcurstr[i];
+
+        }
+        else
+        {
+            pretstr[j--] = '0';
+            pretstr[j--] = '2';
+            pretstr[j--] = '%';
+        }
+    }
+}
+
+
+int main()
+{
+    replaceblank(string);
+    printf(&quot;%s\n&quot;, string);
+    return 0;
+}
+
+&lt;/pre&gt;
+
+
+
+
+&lt;p&gt;
+  暂时看到这里。后续继续更新  &lt;/br&gt;
+&lt;/p&gt;
+
+</description>
+				
+				<pubDate>Thu, 01 Mar 2018 00:00:00 +0800</pubDate>
+				<link>http://localhost:4000/%E5%89%91%E6%8C%87offer-linux-c</link>
+				<guid isPermaLink="true">http://localhost:4000/%E5%89%91%E6%8C%87offer-linux-c</guid>
+			</item>
+			
+		
+			
+			<item>
 				<title>git的简单操作</title>
 				
 					<description>&lt;p&gt;
@@ -37,8 +380,8 @@
 &lt;pre&gt;
 # echo &quot;# test info&quot; &gt;&gt; README.md           #新建README.md
 # git add .                                 #本地仓库新增这个文件
-# git commit -m &quot;commit the readme&quot;         #提交到本地，日志为-m后面&quot;&quot;内的字符串
-# git push -u origin master                 #push到远程主线。此时可以使用reset来回退代码，这样远端就不会有这次commit的记录
+# git commit -m &quot;commit the readme&quot;         #提交到本地，日志为-m后面&quot;&quot;内的字符串。万一commit错误，可以不进行下一步，直接使用reset来回退代码，这样远端就不会有这次commit的记录
+# git push -u origin master                 #push到远程主线。
 &lt;/pre&gt;
 
 
@@ -252,8 +595,7 @@ f [0, 1, 2, 3, 4] 40819608
 			<item>
 				<title>pass</title>
 				
-					<description>&lt;p&gt;python就是个pass
-c语言就是个;&lt;/p&gt;
+					<description>&lt;p&gt;;&lt;/p&gt;
 </description>
 				
 				<pubDate>Sat, 01 Jan 2011 00:00:00 +0800</pubDate>
@@ -266,8 +608,7 @@ c语言就是个;&lt;/p&gt;
 			<item>
 				<title>pass</title>
 				
-					<description>&lt;p&gt;python就是个pass
-c语言就是个;&lt;/p&gt;
+					<description>&lt;p&gt;;&lt;/p&gt;
 </description>
 				
 				<pubDate>Sat, 01 Jan 2011 00:00:00 +0800</pubDate>
