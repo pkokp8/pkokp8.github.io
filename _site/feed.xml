@@ -11,16 +11,21 @@
 				<title>颜色渐变</title>
 				
 					<description>&lt;p&gt;
-  某天，打开了windows附件的画图工具。想选用一种颜色，点到了编辑颜色的地方。&lt;/br&gt;
+  某天，打开了windows附件的画图工具。想选用一种颜色，点到了编辑颜色的地方。
+&lt;/p&gt;
+
+
+&lt;p&gt;
   发现这颜色渐变很神奇，横向纵向的颜色都是变化的。于是决定写一份代码来实现这个颜色渐变的功能。
 &lt;/p&gt;
 
 
+&lt;blockquote&gt;&lt;p&gt;第一级段落缩进。&lt;/p&gt;
 
+&lt;blockquote&gt;&lt;p&gt;第二级段落缩进。&lt;/p&gt;&lt;/blockquote&gt;&lt;/blockquote&gt;
 
 &lt;p&gt;
-  用c语言。&lt;/br&gt;
-  生成一副rgb数据的图像。&lt;/br&gt;
+  用c语言，生成一副rgb数据的图像。图像可以用7yuv查看。  
   话不多说，上代码。
 &lt;/p&gt;
 
