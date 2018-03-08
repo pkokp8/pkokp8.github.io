@@ -11,21 +11,22 @@
 				<title>颜色渐变</title>
 				
 					<description>&lt;p&gt;
-  某天，打开了windows附件的画图工具。想选用一种颜色，点到了编辑颜色的地方。
+  打开了windows的cmd--mspaint工具。想选用一种颜色，点到了编辑颜色的地方。发现这颜色渐变很神奇，横向纵向的颜色都是变化的。
 &lt;/p&gt;
 
 
 &lt;p&gt;
-  发现这颜色渐变很神奇，横向纵向的颜色都是变化的。于是决定写一份代码来实现这个颜色渐变的功能。
+  于是决定写一份代码来实现这个颜色渐变的功能。一开始很sb的认为rgb的渐变不是很简单嘛，rgb888的最大色是0xffffff，最小色是0x0。(0xffffff-0x0)/(w*h)得到每个像素点的变化step，然后跟随像素点的座标不断加step。
 &lt;/p&gt;
 
 
-&lt;blockquote&gt;&lt;p&gt;第一级段落缩进。&lt;/p&gt;
+&lt;p&gt;
+  仔细一想，这特么不是sb是什么。渐变是两种分量颜色不变，一种颜色分量慢慢变化。前面的那种算法画出来的图像简直一坨翔，惨不忍睹（其实看多了也还好？）。
+&lt;/p&gt;
 
-&lt;blockquote&gt;&lt;p&gt;第二级段落缩进。&lt;/p&gt;&lt;/blockquote&gt;&lt;/blockquote&gt;
 
 &lt;p&gt;
-  用c语言，生成一副rgb数据的图像。图像可以用7yuv查看。  
+  幸好windows的画图工具给了颜色编辑时的每个点的rgb值，观察规律。最后用c语言，生成了一副rgb裸数据的图像。图像可以用7yuv查看。    
   话不多说，上代码。
 &lt;/p&gt;
 
@@ -65,10 +66,11 @@ int main()
     for(y = 0; y &lt; gheight; y++)
     {
         int r,g,b;
-        startr = (-127) * y / gheight + 255;
+        int cnt = 0;
+        startr = (-127) * y / gheight + 255;        //生成纵向最左侧的颜色
         startg = y * 127 / gheight;
         startb = y * 127 / gheight;
-        endr = 255 - startr;
+        endr = 255 - startr;                        //这里取名有点误解，并不是右侧的end值，而是与start组成了颜色变化的范围
         endg = 255 - startg;
         endb = 255 - startg;
 
@@ -76,11 +78,10 @@ int main()
         g = startg;
         b = startb;
         flag = ADDGERRN;
-        int cnt = 0;
         for(x = 0; x &lt; gwidth; x++)
         {
-            double stepw = abs((endr - startr)) / (gwidth * 1.0);
-            if(flag == ADDGERRN)
+            double stepw = abs((endr - startr)) / (gwidth * 1.0);   //r,g,b的步长是一样的，用r计算就行了
+            if(flag == ADDGERRN)                    //观察画图工具的变化规律，最左侧是个定值，然后rgb分别变化，增加到最大值或减少到最大值后，进行下一个分量的变化。总共6种变化
             {
                 g = startg + (int)(stepw * (BUTT - 1) * cnt);
                 cnt++;
