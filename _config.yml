@@ -1,7 +1,7 @@
 auto: true
 
-markdown: kramdown
-#rdiscount
+markdown: rdiscount
+#kramdown
 
 highlighter: 'pygments'
 #paginate: 8
