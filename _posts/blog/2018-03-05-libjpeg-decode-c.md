@@ -197,3 +197,5 @@ int jpeg_to_yuv422(unsigned char *jpeg_buffer,int insize, unsigned char **yuv_bu
 <pre>
 #define DSTATE_START	200	/* after create_decompress */
 </pre>
+
+
