@@ -355,7 +355,22 @@ int jpeg_to_yuv422(unsigned char *jpeg_buffer,int insize, unsigned char **yuv_bu
 &lt;h1 id=&quot;jpeg_std_error&quot;&gt;jpeg_std_error&lt;/h1&gt;
 &lt;p&gt;这是一个异常处理函数相关的注册。libjpeg所有的异常返回，默认都是直接调用exit退出。也就是说如果发生了错误，程序就直接挂了。这在本地测试、使用时没什么问题，出错了定位一下，然后接着用。但生产环境中动不动就可能程序退出，还没什么日志，这怎么行？libjpeg提供了一种方法，先覆盖默认的error_exit函数指针。&lt;br /&gt;
 例如提供一个my_error_exit函数通过jpeg_std_error注册进libjpeg。&lt;br /&gt;
-在my_error_exit以及解码接口中通过setjmp/longjmp实现函数间的跳转&lt;/p&gt;
+在my_error_exit以及解码接口中通过setjmp/longjmp实现函数间的跳转。具体可以看一下example.c的实现。不难&lt;/p&gt;
+
+&lt;h1 id=&quot;jpeg_create_decompress&quot;&gt;jpeg_create_decompress&lt;/h1&gt;
+&lt;pre&gt;
+/* jpeglib.h */
+#define jpeg_create_decompress(cinfo) \
+    jpeg_CreateDecompress((cinfo), JPEG_LIB_VERSION, \
+			  (size_t) sizeof(struct jpeg_decompress_struct))
+
+&lt;/pre&gt;
+&lt;p&gt;可见，实际jpeg_create_decompress接口就是jpeg_CreateDecompress。函数实现在jdapimin.c中。记住，源码文件前缀的命名，j是jpeg，c是compress，d是decompress。&lt;br /&gt;
+实际上这个接口仅仅是向解码结构体j_decompress_ptr中注册一些函数指针，初始化一些数据结构，并且标记这个解码结构体的解码状态为DSTATE_START&lt;/p&gt;
+&lt;pre&gt;
+#define DSTATE_START	200	/* after create_decompress */
+&lt;/pre&gt;
+
 </description>
 				
 				<pubDate>Mon, 05 Mar 2018 00:00:00 +0800</pubDate>
