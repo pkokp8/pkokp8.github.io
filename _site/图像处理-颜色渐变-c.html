@@ -52,25 +52,16 @@
         <p>
   打开了windows的cmd--mspaint工具。想选用一种颜色，点到了编辑颜色的地方。发现这颜色渐变很神奇，横向纵向的颜色都是变化的。
 </p>
-
-
 <p>
   于是决定写一份代码来实现这个颜色渐变的功能。一开始很sb的认为rgb的渐变不是很简单嘛，rgb888的最大色是0xffffff，最小色是0x0。(0xffffff-0x0)/(w*h)得到每个像素点的变化step，然后跟随像素点的座标不断加step。
 </p>
-
-
 <p>
   仔细一想，这特么不是sb是什么。渐变是两种分量颜色不变，一种颜色分量慢慢变化。前面的那种算法画出来的图像简直一坨翔，惨不忍睹（其实看多了也还好？）。
 </p>
-
-
 <p>
   幸好windows的画图工具给了颜色编辑时的每个点的rgb值，观察规律。最后用c语言，生成了一副rgb裸数据的图像。图像可以用7yuv查看。    
   话不多说，上代码。
 </p>
-
-
-
 
 <pre>
 #include &lt;stdio.h&gt;
@@ -81,19 +72,19 @@ unsigned char dstrgb24[WIDTH*HEIGHT*3] = {0};
 
 
 typedef enum _CHANG{
-    ADDGERRN    = 1,
-    MINUSRED    = 2,
-    ADDBLUE     = 3,
-    MINUSGREEN  = 4,
-    ADDRED      = 5,
-    MINUSBLUE   = 6,
+    ADDGERRN 	= 1,
+    MINUSRED 	= 2,
+    ADDBLUE 	= 3,
+    MINUSGREEN 	= 4,
+    ADDRED 		= 5,
+    MINUSBLUE 	= 6,
     BUTT
 }CHANGE;
 
 int gwidth = WIDTH;
 int gheight = HEIGHT;
 
-#define abs(x) ((x)<0?(-1*(x)):(x))
+#define abs(x) ((x)&lt;0?(-1*(x)):(x))
 int main()
 {
     int pixel = 0;
@@ -102,14 +93,14 @@ int main()
     int startr, startg, startb;
     int endr, endg, endb;
     CHANGE flag = BUTT;
-    for(y = 0; y < gheight; y++)
+    for(y = 0; y &lt; gheight; y++)
     {
         int r,g,b;
         int cnt = 0;
-        startr = (-127) * y / gheight + 255;        //生成纵向最左侧的颜色
+        startr = (-127) * y / gheight + 255;		//生成纵向最左侧的颜色
         startg = y * 127 / gheight;
         startb = y * 127 / gheight;
-        endr = 255 - startr;                        //这里取名有点误解，并不是右侧的end值，而是与start组成了颜色变化的范围
+        endr = 255 - startr;						//这里取名有点误解，并不是右侧的end值，而是与start组成了颜色变化的范围
         endg = 255 - startg;
         endb = 255 - startg;
 
@@ -117,14 +108,14 @@ int main()
         g = startg;
         b = startb;
         flag = ADDGERRN;
-        for(x = 0; x < gwidth; x++)
+        for(x = 0; x &lt; gwidth; x++)
         {
-            double stepw = abs((endr - startr)) / (gwidth * 1.0);   //r,g,b的步长是一样的，用r计算就行了
-            if(flag == ADDGERRN)                    //观察画图工具的变化规律，最左侧是个定值，然后rgb分别变化，增加到最大值或减少到最大值后，进行下一个分量的变化。总共6种变化
+            double stepw = abs((endr - startr)) / (gwidth * 1.0);	//r,g,b的步长是一样的，用r计算就行了
+            if(flag == ADDGERRN)					//观察画图工具的变化规律，最左侧是个定值，然后rgb分别变化，增加到最大值或减少到最大值后，进行下一个分量的变化。总共6种变化
             {
                 g = startg + (int)(stepw * (BUTT - 1) * cnt);
                 cnt++;
-                if(g >= endg)
+                if(g &gt;= endg)
                 {
                     cnt = 0;
                     g = endg;
@@ -135,7 +126,7 @@ int main()
             {
                 r = startr - (int)(stepw * (BUTT - 1) * cnt);
                 cnt++;
-                if(r <= endr)
+                if(r &lt;= endr)
                 {
                     cnt = 0;
                     r = endr;
@@ -146,7 +137,7 @@ int main()
             {
                 b = startb + (int)(stepw * (BUTT - 1) * cnt);
                 cnt++;
-                if(b >= endb)
+                if(b &gt;= endb)
                 {
                     cnt = 0;
                     b = endb;
@@ -157,7 +148,7 @@ int main()
             {
                 g = endg - (int)(stepw * (BUTT - 1) * cnt);
                 cnt++;
-                if(g <= startg)
+                if(g &lt;= startg)
                 {
                     cnt = 0;
                     g = startg;
@@ -168,7 +159,7 @@ int main()
             {
                 r = endr + (int)(stepw * (BUTT - 1) * cnt);
                 cnt++;
-                if(r >= startr)
+                if(r &gt;= startr)
                 {
                     cnt = 0;
                     r = startr;
@@ -179,7 +170,7 @@ int main()
             {
                 b = endb - (int)(stepw * (BUTT - 1) * cnt);
                 cnt++;
-                if(b <= startb)
+                if(b &lt;= startb)
                 {
                     cnt = 0;
                     b = startb;
@@ -209,9 +200,6 @@ int main()
 
 </pre>
 
-
-
-
 <pre>
 [root@sf_share]# gcc color.c 
 [root@sf_share]# ./a.out 
@@ -220,8 +208,6 @@ int main()
 color.rgb
 
 </pre>
-
-
 <p><img src="/images/color.png" alt="avatar" /></p>
 
         <div id="disqus_container">
@@ -290,7 +276,8 @@ color.rgb
 
 
 
-
+<!--
+todo: some elements are covered by other.maybe it's because the follow of css or js?
 <div id="container"></div>
 <link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
 <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
@@ -306,6 +293,7 @@ var gitment = new Gitment({
 })
 gitment.render('container')
 </script>
+-->
 
     <script type="text/javascript">
         $(function(){

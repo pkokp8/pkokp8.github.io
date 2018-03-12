@@ -55,59 +55,38 @@
   也可以本地创建好后push上去，不过这样也挺方便的。初学者嘛
 </p>
 
-
-
-
 <p>
   然后是clone一个master，例如刚才创建的pkokp8.github.io.git分支
 </p>
-
-
 <pre>
 # git clone https://github.com/pkokp8/pkokp8.github.io.git
 </pre>
 
-
-
-
 <p>接着就可以修改、提交文件</p>
-
-
 <pre>
-# echo "# test info" >> README.md           #新建README.md
+# echo "# test info" &gt;&gt; README.md           #新建README.md
 # git add .                                 #本地仓库新增这个文件
 # git commit -m "commit the readme"         #提交到本地，日志为-m后面""内的字符串。万一commit错误，可以不进行下一步，直接使用reset来回退代码，这样远端就不会有这次commit的记录
 # git push -u origin master                 #push到远程主线。
 </pre>
 
-
-
-
 <p>
   此时可能因为没有用户名和密码，会提示错误。可以配置后再执行上述命令
 </p>
-
-
-
 
 <pre>
 # git config --global user.name "pkokp8"
 # git config --global user.email "xxx@xx.com"
 </pre>
 
-
-
-
 <p>
   查看本地的提交记录，简单的可以使用。配合reset可以回退版本。注意-hard会把本地修改覆盖掉。  
   类似svn的svn revert ./ -R;svn up -r xxx
 </p>
-
-
 <pre>
 # git log
 commit af17a9f424c5da5b4b06f90e69eb069f89124e40
-Author: pkokp8 <xxx@xx.com>
+Author: pkokp8 &lt;xxx@xx.com&gt;
 Date:   Thu Mar 1 00:23:55 2018 +0800
 
     modify readme
@@ -115,14 +94,9 @@ Date:   Thu Mar 1 00:23:55 2018 +0800
 # git reset -hard af17a9f424c5da5b4b06f90e69eb069f89124e40 
 </pre>
 
-
-
-
 <p>
   接着就可以创建分支了：
 </p>
-
-
 <pre>
 # git branch firstversion                   #创建名为firstversion的分支
 # git checkout firstversion                 #切换到这个分支
@@ -134,13 +108,9 @@ Date:   Thu Mar 1 00:23:55 2018 +0800
 # git diff                                  #查看本地与本地仓库之间的差异
 </pre>
 
-
-
-
 <p>
   暂时就用到这么多。我感觉我还是要学习一个
 </p>
-
 
         <div id="disqus_container">
             <class="comment"/>
@@ -208,7 +178,8 @@ Date:   Thu Mar 1 00:23:55 2018 +0800
 
 
 
-
+<!--
+todo: some elements are covered by other.maybe it's because the follow of css or js?
 <div id="container"></div>
 <link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
 <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
@@ -224,6 +195,7 @@ var gitment = new Gitment({
 })
 gitment.render('container')
 </script>
+-->
 
     <script type="text/javascript">
         $(function(){
