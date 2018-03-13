@@ -216,13 +216,13 @@ int jpeg_to_yuv422(unsigned char *jpeg_buffer,int insize, unsigned char **yuv_bu
 
 
 ## jpeg_mem_src ##
-jpeg_mem_src在libjpeg.so.62是不存在的。但在较新版本中存在这个接口。较新版本的libjpeg使用时遇到了一些问题，暂时没找到解决办法，因此就把新版本库中的这个接口移植了过来。移植方法很简单，新搜一下这个函数，直接拿过来放在62版本同样的位置。编译一下，提示少定义函数了，再继续移植。提示少声明了，再继续移植。几分钟就搞定了。
+jpeg_mem_src在libjpeg.so.62是不存在的。但在较新版本中存在这个接口。较新版本的libjpeg使用时遇到了一些问题，暂时没找到解决办法，因此就把新版本库中的这个接口移植了过来。移植方法很简单，新搜一下这个函数，直接拿过来放在62版本同样的位置。编译一下，提示少定义函数了，再继续移植。提示少声明了，再继续移植。几分钟就搞定了。  
 这个接口的入参除了解码结构体，还有一个buffer和一个size，就是需要解码的jpegbuffer的指针和长度。函数会把buffer和size注册给解码结构体内部的一个jpeg内存管理结构。此外就是注册一些内存管理的函数指针了。  
 
 
 ## jpeg_read_header ##
-看名字就可以知道，这个函数的功能是读取一下jpeg头。jpeg头中包含了很多解码需要的信息，例如huffman表，jpeg的长宽、位宽等等。
-那么具体看一下，首先这个接口调用了jpeg_consume_input，接着根据返回值就返回了。联系函数名叫做readheader，那么jpeg_consume_input的返回值必定是JPEG_REACHED_SOS。否则如果是JPEG_REACHED_EOI（EOI，end of image），那干脆叫jpeg_decoder算了。
+看名字就可以知道，这个函数的功能是读取一下jpeg头。jpeg头中包含了很多解码需要的信息，例如huffman表，jpeg的长宽、位宽等等。  
+那么具体看一下，首先这个接口调用了jpeg_consume_input，接着根据返回值就返回了。联系函数名叫做readheader，那么jpeg_consume_input的返回值必定是JPEG_REACHED_SOS。否则如果是JPEG_REACHED_EOI（EOI，end of image），那干脆叫jpeg_decoder算了。  
 # jpeg_consume_input #
 <pre>
 GLOBAL(int)
@@ -249,11 +249,11 @@ jpeg_consume_input (j_decompress_ptr cinfo)
     }
     break;
 </pre>
-里面就是个switch...case。首先解码状态在jpeg_create_decompress时被设为DSTATE_START，因此调用了reset_input_controller以及init_source，并标记解码状态为DSTATE_INHEADER。
-接着调用consume_input，以及default_decompress_parms，并标记解码状态为DSTATE_READY。
-reset_marker_reader看名字，叫做reset marker reader，外层函数叫做read header，显然就是用来重置解码结构体中marker相关的内容的。看进去也可以发现，没有实际的读取jpegbuffer。
-init_source更简单，标记 ((my_src_ptr)cinfo->src)->start_of_file为true。意味着获取到了数据。那么显然主要操作在consume_input和default_decompress_parms中。
-consume_input函数指针是jdinput.c--consume_markers函数。调用read_markers并返回JPEG_REACHED_SOS，接着调用initial_setup判断一下之前读出来的一些信息的合法性。
+里面就是个switch...case。首先解码状态在jpeg_create_decompress时被设为DSTATE_START，因此调用了reset_input_controller以及init_source，并标记解码状态为DSTATE_INHEADER。  
+接着调用consume_input，以及default_decompress_parms，并标记解码状态为DSTATE_READY。  
+reset_marker_reader看名字，叫做reset marker reader，外层函数叫做read header，显然就是用来重置解码结构体中marker相关的内容的。看进去也可以发现，没有实际的读取jpegbuffer。  
+init_source更简单，标记 ((my_src_ptr)cinfo->src)->start_of_file为true。意味着获取到了数据。那么显然主要操作在consume_input和default_decompress_parms中。  
+consume_input函数指针是jdinput.c--consume_markers函数。调用read_markers并返回JPEG_REACHED_SOS，接着调用initial_setup判断一下之前读出来的一些信息的合法性。  
 # read_markers #
 可以看到，这个函数就是个死循环。一开始unread_marker和saw_SOI都是0，先用first_marker读第一个标记M_SOI，并标记saw_SOI为TRUE，于是下一次就会调用next_marker，每次通过switch...case处理当前读到的标记下面的一段数据，直到读到M_SOS就会返回JPEG_REACHED_SOS。至于如何解析各个标记，可以去找一下jpeg的头的格式。网上资料还是比较详细的。
 <pre>
@@ -279,28 +279,28 @@ unread_marker = da
 </pre>
 例如根据jpeg的格式，一张jpeg的宽高可以从sof标记后面的数据得到：
 ![avatar](/images/libjpegmaterial/1.jpg)
-1920=0x0780
-1080=0x0438
-当然并不是所有jpeg图像都有上述的各个标记。具体图像具体分析。
-最终read_markers将返回值JPEG_REACHED_SOS返回到jpeg_consume_input中，会接着执行default_decompress_parms。
+1920=0x0780  
+1080=0x0438  
+当然并不是所有jpeg图像都有上述的各个标记。具体图像具体分析。  
+最终read_markers将返回值JPEG_REACHED_SOS返回到jpeg_consume_input中，会接着执行default_decompress_parms。  
 根据default_decompress_parms的注释，这段代码是一个猜测的经验值，并没有规定一定是这样。jpeg_color_space是输入的jpeg的色彩空间。out_color_space是输出的。
 <pre>
 ![avatar](/images/libjpegmaterial/2.jpg)
 </pre>
-最上方的这张图的输入是JCS_YCbCr，输出在此处被设为了JCS_RGB。理论上如果需要实现解码成yuv，那么此处应该设置输出为JCS_YCbCr。这个后面再讲。(1)
-最终设置一些默认解码参数，例如raw_data_out为false，dct_method为JDCT_DEFAULT，scale比例为1等等，之后函数就结束了。
-最终jpeg_consume_input标记解码状态为DSTATE_READY，jpeg_read_header就正常的结束了。
+最上方的这张图的输入是JCS_YCbCr，输出在此处被设为了JCS_RGB。理论上如果需要实现解码成yuv，那么此处应该设置输出为JCS_YCbCr。这个后面再讲。(1)  
+最终设置一些默认解码参数，例如raw_data_out为false，dct_method为JDCT_DEFAULT，scale比例为1等等，之后函数就结束了。  
+最终jpeg_consume_input标记解码状态为DSTATE_READY，jpeg_read_header就正常的结束了。  
 
 
 
 ## jpeg_start_decompress ##
-调用jinit_master_decompress初始化master。这是个私有数据，可以暂不关心。并标记解码状态为DSTATE_PRELOAD。
-progress这个函数指针是注册一个进度处理函数，可以显示进度。一般可以不注册，那么就忽略。
-而has_multiple_scans标记位，看名字意思是jpeg图像中有多个扫描。上面这张图并没有这个特征。
+调用jinit_master_decompress初始化master。这是个私有数据，可以暂不关心。并标记解码状态为DSTATE_PRELOAD。  
+progress这个函数指针是注册一个进度处理函数，可以显示进度。一般可以不注册，那么就忽略。  
+而has_multiple_scans标记位，看名字意思是jpeg图像中有多个扫描。上面这张图并没有这个特征。  
 接着调用output_pass_setup就可以返回了。
 # output_pass_setup #
-注意此处的解码状态依然是DSTATE_PRELOAD，因此会调用prepare_for_output_pass。is_dummy_pass在jinit_master_decompress时被初始化为false，因此下面其实是个不执行的循环，意思是prepare_for_output_pass执行完就基本返回了。
-prepare_for_output_pass中首先和上面说的一样，is_dummy_pass是false，default_decompress_parms会把quantize_colors设为false，colormap设为NULL；jpeg_create_decompress会把progress设为NULL。
+注意此处的解码状态依然是DSTATE_PRELOAD，因此会调用prepare_for_output_pass。is_dummy_pass在jinit_master_decompress时被初始化为false，因此下面其实是个不执行的循环，意思是prepare_for_output_pass执行完就基本返回了。  
+prepare_for_output_pass中首先和上面说的一样，is_dummy_pass是false，default_decompress_parms会把quantize_colors设为false，colormap设为NULL；jpeg_create_decompress会把progress设为NULL。  
 于是，此处相当于只执行了以下内容：
 <pre>
     (*cinfo->idct->start_pass) (cinfo);
@@ -316,15 +316,15 @@ prepare_for_output_pass中首先和上面说的一样，is_dummy_pass是false，
       (*cinfo->main->start_pass) (cinfo, JBUF_PASS_THRU);
 }
 </pre>
-可以看出都是一些start pass。说明并不是实际的进行一些解码变换。否则应该叫idct->process。
-举个例子，idct->start_pass注册为jddctmgr.c--start_pass，看一下大致的流程，仅仅是初始化一些查询表，不作解码动作。
-raw_data_out在default_decompress_parms时被设为false，因此最终解码状态为DSTATE_SCANNING。如果手动设置了raw_data_out（见上(1)），那么此处可能是DSTATE_RAW_OK。
+可以看出都是一些start pass。说明并不是实际的进行一些解码变换。否则应该叫idct->process。  
+举个例子，idct->start_pass注册为jddctmgr.c--start_pass，看一下大致的流程，仅仅是初始化一些查询表，不作解码动作。  
+raw_data_out在default_decompress_parms时被设为false，因此最终解码状态为DSTATE_SCANNING。如果手动设置了raw_data_out（见上(1)），那么此处可能是DSTATE_RAW_OK。  
 不管怎么说，jpeg_start_decompress就正确的返回了。
 
 
 ## jpeg_read_scanlines/jpeg_read_raw_data ##
-根据解码状态，显然接下去应该调用jpeg_read_scanlines解码。也有可能调用jpeg_read_raw_data解码。
-如果要详细讲这两个函数，那么显然要了解jpeg的编码、解码方式。由于我的能力有限，暂未能详细了解jpeg的编解码流程，因此此处暂且不讲具体流程，仅仅简单的分析一下。
+根据解码状态，显然接下去应该调用jpeg_read_scanlines解码。也有可能调用jpeg_read_raw_data解码。  
+如果要详细讲这两个函数，那么显然要了解jpeg的编码、解码方式。由于我的能力有限，暂未能详细了解jpeg的编解码流程，因此此处暂且不讲具体流程，仅仅简单的分析一下。  
 这两个函数处于jdapistd.c中，并且是紧挨着的两个函数。说明功能其实差不多。
 # jpeg_read_scanlines #
 调用process_data--process_data_simple_main。而process_data_simple_main调用decompress_data和post_process_data。
@@ -332,10 +332,10 @@ raw_data_out在default_decompress_parms时被设为false，因此最终解码状
 直接调用decompress_data。
 
 # post_process_data #
-虽然细节上还有差异，但显然差异就在于post_process_data。
-post->pub.post_process_data ---- cinfo->upsample->upsample ---- (jdsample.c)sep_upsample
-sep_upsample中调用了两个接口，methods以及color_convert。methods是一些采样方法，暂且忽略。color_convert就是色彩空间的转换。
-jinit_master_decompress-master_selection-jinit_color_deconverter中会根据输入的jpeg色彩空间以及输出的色彩空间（之前默认rgb），设置color_convert函数指针为
+虽然细节上还有差异，但显然差异就在于post_process_data。  
+post->pub.post_process_data ---- cinfo->upsample->upsample ---- (jdsample.c)sep_upsample  
+sep_upsample中调用了两个接口，methods以及color_convert。methods是一些采样方法，暂且忽略。color_convert就是色彩空间的转换。  
+jinit_master_decompress-master_selection-jinit_color_deconverter中会根据输入的jpeg色彩空间以及输出的色彩空间（之前默认rgb），设置color_convert函数指针为  
 grayscale_convert  
 ycc_rgb_convert  
 gray_rgb_convert  
@@ -369,13 +369,13 @@ photoshop  :
 
 
 ## jpeg_finish_decompress/jpeg_destroy_decompress ##
-一般来说，完成解码会调用这两个接口进行资源回收。但如果需要反复的解码，建议jpeg_create_decompress之前的代码只执行一次。此处只执行jpeg_finish_decompress，不执行jpeg_destroy_decompress。
-jpeg_finish_decompress的内部会调用jpeg_abort进行一些资源回收。不调用jpeg_abort会出现内存泄漏问题。
+一般来说，完成解码会调用这两个接口进行资源回收。但如果需要反复的解码，建议jpeg_create_decompress之前的代码只执行一次。此处只执行jpeg_finish_decompress，不执行jpeg_destroy_decompress。  
+jpeg_finish_decompress的内部会调用jpeg_abort进行一些资源回收。不调用jpeg_abort会出现内存泄漏问题。  
 jpeg_abort很奇怪的位于jcomapi.c中
 
 
 
-至此，一段简单的jpeg解码流程就结束了。欢迎和我讨论: pkokp8@gmail.com
+至此，一段简单的jpeg解码流程就结束了。欢迎和我讨论: pkokp8@gmail.com  
 编码流程有空继续补充。
 
 
