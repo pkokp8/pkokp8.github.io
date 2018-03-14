@@ -1,15 +1,16 @@
 ---
 layout:     post
-title: libjpeg不完全解
-description: 要说详解肯定要说实际解码部分，还没这么深入。应该算是初解
+title: libjpeg解码篇
+description: 详解需要讲实际解码部分，还没这么深入。因此这算是初解
 category: blog
 ---
 
-先放一张图。
+既然是jpeg解码，那就先放一张图。图是从bing首页上爬下来的。
 
 ![avatar](/images/libjpegmaterial/CactiIslaPescado_ZH-CN11317505000_1920x1080_orig.jpg)
 
-jpeg有非常多格式，后面会拿上图作示例。这是一张jfif格式的jpeg图像。
+jpeg有非常多格式，后面的demo会拿上图作示例，不保证所有图片都能解码。  
+这是一张jfif格式的jpeg图像。
 
 
 
@@ -31,10 +32,11 @@ EOI				(0xFFD9)
 </pre>
 
 <p>
-然后放一段可以直接拿来用的libjpeg的sample代码。这段代码并没有经过仔细的优化，部分显示效果也并不是最佳。但作为解码的初解，应该够了吧。
+然后话不多说，直接先放一段可以直接拿来用的libjpeg的sample代码。  
+这段代码并没有经过仔细的优化，部分显示效果也并不是最佳。但作为初步认识libjpeg，应该够了吧。
 </p>
 <pre>
-int jpeg_to_yuv422(unsigned char *jpeg_buffer,int insize, unsigned char **yuv_buffer, int *yuvlen)
+int jpeg_to_yuv(unsigned char *jpeg_buffer,int insize, unsigned char **yuv_buffer, int *yuvlen)
 {
 	int a, i;
 	int width, height;
@@ -159,7 +161,7 @@ int jpeg_to_yuv422(unsigned char *jpeg_buffer,int insize, unsigned char **yuv_bu
 	/* rbgb24 to yuv */
 	{
 		*yuv_buffer = (unsigned char*)malloc(width * height * 2);
-		RGB2YUV422(rgb24_buffer, *yuv_buffer, height * width);
+		RGB2YUV(rgb24_buffer, *yuv_buffer, height * width);
 	}
 	(void) jpeg_finish_decompress(&cinfo);
 
@@ -180,7 +182,8 @@ int jpeg_to_yuv422(unsigned char *jpeg_buffer,int insize, unsigned char **yuv_bu
 然后开始讲解一下这段代码。
 ## jpeg_std_error ##
 
-这是一个异常处理函数相关的注册。libjpeg所有的异常返回，默认都是直接调用exit退出。也就是说如果发生了错误，程序就直接挂了。这在本地测试、使用时没什么问题，出错了定位一下，然后接着用。但生产环境中动不动就可能程序退出，还没什么日志，这怎么行？libjpeg提供了一种方法，先覆盖默认的error_exit函数指针。  
+这是一个异常处理函数相关的注册。libjpeg所有的异常返回，默认都是调用exit退出。也就是说如果发生了逻辑上的错误（流程、参数错误之类的），程序就直接就挂了，并且即使注册了信号处理函数都无法捕捉。  
+这在本地测试、使用时没什么问题，出错了定位一下，然后接着用。但生产环境中动不动就可能程序退出，还没什么日志，这怎么行？因此libjpeg也提供了一种方法，需要覆盖默认的error_exit函数指针。  
 例如提供一个my_error_exit函数通过jpeg_std_error注册进libjpeg。  
 在my_error_exit以及解码接口中通过setjmp/longjmp实现函数间的跳转。具体可以看一下example.c的实现。不难
 
@@ -193,8 +196,9 @@ int jpeg_to_yuv422(unsigned char *jpeg_buffer,int insize, unsigned char **yuv_bu
 			  (size_t) sizeof(struct jpeg_decompress_struct))
 
 </pre>
-可见，jpeg_create_decompress接口就是jpeg_CreateDecompress。函数实现在jdapimin.c中。有一点需要提一下，源码文件前缀的命名，j是jpeg，c是compress，d是decompress。现在看解码相关的代码时，搜函数搜到的jc开头的文件里时就可以忽略了。既不是c也不是d，但是j开头的，说明是公共文件。如果都不是，有可能是一个demo，有可能是一些扩展功能，例如bmp函数相关的封装等。  
-进入这个函数内部一步步的看可以发现，这个create接口仅仅是向解码结构体j_decompress_ptr中注册一些函数指针，初始化一些数据结构，并且标记这个解码结构体的解码状态为DSTATE_START。解码状态是个一次解码中的全局标志位，可以通过解码结构体查询和设置。因为是单线程解码，因此没有锁的问题。  
+jpeg_create_decompress就是jpeg_CreateDecompress。函数实现在jdapimin.c中。  
+有一点需要提一下，源码文件前缀的命名，j是jpeg，c是compress，d是decompress。看解码相关的代码时，搜函数搜到的jc开头的文件里时一般可以忽略了。既不是c也不是d，但是j开头的，说明是公共文件。如果都不是，有可能是一个demo，也有可能是一些扩展功能，例如bmp函数相关的封装等。  
+进入这个函数内部一步步的看可以发现，这个create接口仅仅是向解码结构体j_decompress_ptr中注册一些函数指针，初始化一些数据结构，并且标记这个解码结构体的解码状态为DSTATE_START。解码状态是个一次解码中的全局标志位，可以通过解码结构体查询和设置。因为是单线程解码，没有锁的问题。  
 <pre>
 /* Values of global_state field (jdapi.c has some dependencies on ordering!) */
 #define CSTATE_START	100	/* after create_compress */
@@ -216,12 +220,12 @@ int jpeg_to_yuv422(unsigned char *jpeg_buffer,int insize, unsigned char **yuv_bu
 
 
 ## jpeg_mem_src ##
-jpeg_mem_src在libjpeg.so.62是不存在的。但在较新版本中存在这个接口。较新版本的libjpeg使用时遇到了一些问题，暂时没找到解决办法，因此就把新版本库中的这个接口移植了过来。移植方法很简单，新搜一下这个函数，直接拿过来放在62版本同样的位置。编译一下，提示少定义函数了，再继续移植。提示少声明了，再继续移植。几分钟就搞定了。  
-这个接口的入参除了解码结构体，还有一个buffer和一个size，就是需要解码的jpegbuffer的指针和长度。函数会把buffer和size注册给解码结构体内部的一个jpeg内存管理结构。此外就是注册一些内存管理的函数指针了。  
+jpeg_mem_src在libjpeg.so.62是不存在的。但在较新版本中存在这个接口。较新版本的libjpeg使用时遇到了一些问题，暂时没找到解决办法，因此就把新版本库中的这个接口移植了过来。移植方法很简单，新版本内搜一下这个函数，直接拿过来放在62版本同样的位置。编译一下，提示少定义函数了，就抄着新版本移植一下。提示少声明了，照着新版本声明一下。几分钟就搞定了。  
+这个接口的功能是将jpeg的内存数据送给解码结构体。入参除了解码结构体，还有一个buffer和一个size，显然buffer就是需要解码的jpegbuffer的指针，size就是长度。函数会把buffer和size注册给解码结构体内部的一个jpeg内存管理结构。此外就是注册一些内存管理的函数指针了。  
 
 
 ## jpeg_read_header ##
-看名字就可以知道，这个函数的功能是读取一下jpeg头。jpeg头中包含了很多解码需要的信息，例如huffman表，jpeg的长宽、位宽等等。  
+看名字就可以知道，这个函数的功能是读取一下jpeg头。jpeg头中包含了很多解码需要的信息，例如huffman表，量化表，jpeg的长宽、位宽等等。  
 那么具体看一下，首先这个接口调用了jpeg_consume_input，接着根据返回值就返回了。联系函数名叫做readheader，那么jpeg_consume_input的返回值必定是JPEG_REACHED_SOS。否则如果是JPEG_REACHED_EOI（EOI，end of image），那干脆叫jpeg_decoder算了。  
 # jpeg_consume_input #
 <pre>
@@ -284,9 +288,7 @@ unread_marker = da
 当然并不是所有jpeg图像都有上述的各个标记。具体图像具体分析。  
 最终read_markers将返回值JPEG_REACHED_SOS返回到jpeg_consume_input中，会接着执行default_decompress_parms。  
 根据default_decompress_parms的注释，这段代码是一个猜测的经验值，并没有规定一定是这样。jpeg_color_space是输入的jpeg的色彩空间。out_color_space是输出的。
-<pre>
 ![avatar](/images/libjpegmaterial/2.jpg)
-</pre>
 最上方的这张图的输入是JCS_YCbCr，输出在此处被设为了JCS_RGB。理论上如果需要实现解码成yuv，那么此处应该设置输出为JCS_YCbCr。这个后面再讲。(1)  
 最终设置一些默认解码参数，例如raw_data_out为false，dct_method为JDCT_DEFAULT，scale比例为1等等，之后函数就结束了。  
 最终jpeg_consume_input标记解码状态为DSTATE_READY，jpeg_read_header就正常的结束了。  
