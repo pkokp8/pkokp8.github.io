@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--
+    * Author:         BeiYuu
+    * Revised:        pkokp8
+    -->
+    <meta charset="utf-8" />
+    <title>两种无损变长编码 | pkokp8's blog</title>
+    <meta name="author" content="pkokp8" />
+    <meta name="renderer" content="webkit">
+    <meta name="description" content="Everything about pkokp8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <link rel="stylesheet" href="/css/default.css" type="text/css" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="alternate" type="application/atom+xml" title="Recent Entries" href="/atom.xml" />
+    <link rel="alternatecss" type="application/rss+xml" title="“pkokp8's Blog”" href="http://localhost:4000/feed.xml">
+    <script src="/js/jquery-1.7.1.min.js" type="text/javascript"></script>
+</head>
+<body>
+
+    <div class="home-menu">
+        <div class="home-icon-con">
+            <a class="home-menu-icon" href="/">pkokp8</a>
+            <a class="home-follow" href="#" title="Contact Me">+</a>
+        </div>
+        <div class="home-contact">
+            <a href="https://github.com/pkokp8/" target="_blank" style="margin-left:-5px;"><img src="https://github.com/favicon.ico" alt="" width="22"/></a>
+            <a href="http://tieba.baidu.com/f?kw=firefox&fr=index&red_tag=x1116532383" target="_blank" style="text-align:center;"><img src="https://tb1.bdstatic.com/tb/favicon.ico" alt="" width="22"/></a>
+            <a href="https://leetcode.com/pkokp8/" target="_blank" style="text-align:center;"><img src="https://leetcode.com/favicon-32x32.png" alt="" width="22"/></a>
+            <!--
+			<a href="/feed.xml" target="_blank" style="text-align:right"><img src="http://static.firefoxchina.cn/img/201711/7_5a0ba48885d170.png" alt="" width="22"/></a>
+			-->
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="/js/prettify/prettify.css" />
+<style type="text/css">
+    body { background:#B9D3EE; }
+    @media screen and (max-width: 750px){
+        body { background:#fff; }
+    }
+    @media screen and (max-width: 1020px){
+        body { background:#fff; }
+    }
+</style>
+
+<div id="content">
+    <div class="entry">
+        <h1 class="entry-title"><a href="/%E4%B8%A4%E7%A7%8D%E5%8F%98%E9%95%BF%E7%BC%96%E7%A0%81" title="两种无损变长编码">两种无损变长编码</a></h1>
+        <p class="entry-date">2018-03-14</p>
+        <p>最近看了下哥伦布编码，在此记录一下。<br />
+正好上一次写了libjpeg的解码。jpeg的编解码中涉及了一种编解码算法，叫做哈夫曼编码。这里也顺便讲一下。</p>
+
+<h2 id="一阶无符号指数哥伦布编码">一阶无符号指数哥伦布编码</h2>
+<p>264/265的编解码中，一些码流信息是通过哥伦布编码的方式编进码流的。<br />
+例如264的条带头解析中，表示IDR帧的序号是idr_pic_id，这个参数在264码流中是通过ue编码的，即无符号(u)指数(e)哥伦布编码<br />
+哥伦布编码有很多种变种，此处只讲一下一阶无符号指数哥伦布编解码。</p>
+
+<h1 id="编码">编码</h1>
+<p>例如对20进行ue编码<br />
+1.将X转换为二进制。20即10100。<br />
+2.对该值进行加1计算。得到10101<br />
+3.得到该二进制串的长度M。此处M=5<br />
+4.在码流前补充M-1个0。此处得到000010101</p>
+
+<h1 id="解码">解码</h1>
+<p>接下来对上述编码完的数据进行解码。<br />
+1.首先读取码流的连续N个0，直到遇到1为止。000010101有连续N=4个前导0
+2.然后读取N+1位数据X。此处为10101
+3.对X进行-1计算即得到了原始的码字。b(10101) - 1 = b(10100) = d(20)</p>
+
+<p>可以看出，这是一种无损编解码方式。编解码过程中没有精度的丢失。</p>
+
+<h1 id="ffmpeg的哥伦布解码操作">ffmpeg的哥伦布解码操作</h1>
+<p>先贴代码<br />
+todo：注释</p>
+<pre>
+/* libavcodec/golomb.h */
+static inline int get_ue_golomb(GetBitContext *gb)
+{
+    unsigned int buf;
+
+    OPEN_READER(re, gb);
+    UPDATE_CACHE(re, gb);
+    buf = GET_CACHE(re, gb);
+
+    if (buf &gt;= (1 &lt;&lt; 27)) {
+        buf &gt;&gt;= 32 - 9;
+        LAST_SKIP_BITS(re, gb, ff_golomb_vlc_len[buf]);
+        CLOSE_READER(re, gb);
+
+        return ff_ue_golomb_vlc_code[buf];
+    } else {
+        int log = 2 * av_log2(buf) - 31;
+        LAST_SKIP_BITS(re, gb, 32 - log);
+        CLOSE_READER(re, gb);
+        if (CONFIG_FTRAPV &amp;&amp; log &lt; 0) {
+            av_log(NULL, AV_LOG_ERROR, "Invalid UE golomb code\n");
+            return AVERROR_INVALIDDATA;
+        }
+        buf &gt;&gt;= log;
+        buf--;
+
+        return buf;
+    }
+}
+</pre>
+
+<h1 id="哥伦布编码好处">哥伦布编码好处</h1>
+<p>与定长编码不同，哥伦布编码是一种变长编码。<br />
+对于定长编码，举个例子，需要编码一个数字0和一个数字4<br />
+假设数据处于0-255之间，那么可以使用unsigned char来存储这段数据<br />
+0就会被编码成0000 0000<br />
+4就会被编码成0000 0100<br />
+于是生成了一段二进制码流0000 0000 0000 0100<br />
+其中有效的信息是0和100</p>
+
+<p>那么对于哥伦布编码，会产生这样的码流：<br />
+0会被编码成1<br />
+4会被编码成00101<br />
+于是得到了一段码流100101</p>
+
+<p>可见，码流长度被大大的缩减了。<br />
+本来码流的长度是16个二进制位，现在只有6个。</p>
+
+<p>于是能得到一种结论：以后都用哥伦布编码不就行了？<br />
+不行！<br />
+哥伦布编码实际有效信息是除了前导0的部分，前导0是无效信息。而数字越小的部分，前导0越少，数字越大的部分，前导0越多。<br />
+假设一个0和一个0xffff ffff需要被编码，用u32来表示就是32个0和32个1。总长度是64。<br />
+但是用哥伦布编码就是1个1和32个0和1个1和32个0。结果总长度是66。<br />
+看得出此时反而使用定长编码较好，编解码方式也简单。</p>
+
+<h1 id="总结">总结</h1>
+<p>那么什么时候可以用哥伦布编码呢？<br />
+一开始我认为，当需要被编码的数据【大概率】处于较小的值时，可以用哥伦布编码。<br />
+后来看到H264手册中存在类似这样的值：bit_depth_luma_minus8。这个值也是用哥伦布编码的。看到这个位的名字里有个minus8，虽然不知道这个值什么意思，但看名字应该是某个值-8后的值被编码了。<br />
+于是我认为，只要被编码的数据【大概率】分布于【某个区间】时，就可以用哥伦布编码。</p>
+
+<p>这是因为，假如数据99.99%的概率存在于0xffff fff0 - 0xffff ffff之间，剩下的数据是0 - 0xffff ffef平均分布的。只要对所有待编码的数据减去0xffff fff0操作。那么待编码的数据就变成了99.99%的概率分布于0-f。约定解码后加上0xffff fff0即可。</p>
+
+<h2 id="哈夫曼编码">哈夫曼编码</h2>
+
+<h1 id="编码-1">编码</h1>
+<p>假设有一段码流，为ABABDAABCD</p>
+
+<ul>
+  <li>统计各个码字出现的概率，并将码字按出现概率从大到小排序</li>
+</ul>
+
+<p><img src="/images/huffman/huffman3.jpg" alt="avatar" /></p>
+
+<ul>
+  <li>
+    <p>选取出现概率最小的两个码字（DC），构建一个根节点。左子节点的值左边那个码字（D），右子节点是右边那个码字（C）。根节点的值(假设为E)为DC的值相加。E替换DC的位置。
+<img src="/images/huffman/huffman1.jpg" alt="avatar" /></p>
+  </li>
+  <li>
+    <p>继续上述步骤，直到生成一个根节点的值为所有值相加(A+B+C+D)</p>
+  </li>
+  <li>
+    <p>将所有左节点标记为0，右节点标记为1
+<img src="/images/huffman/huffman2.jpg" alt="avatar" /></p>
+  </li>
+  <li>
+    <p>于是可以开始编码
+A的编码为0<br />
+B的编码为10<br />
+C的编码为111<br />
+D的编码为110<br />
+ABABDAABCD的编码就是<br />
+0100101100010111110</p>
+  </li>
+</ul>
+
+<h1 id="解码-1">解码</h1>
+<p>解码首先需要重建这颗haffman树。例如jpeg的DHT字段就含有重构huffman表的信息<br />
+然后去读取编码后的码流0100101100010111110<br />
+0是A，10是B，0是A，10是B，110是D，0是A，0是A，10是B，111是C，110是D<br />
+于是得到ABABDAABCD的原始码流</p>
+
+<h1 id="总结-1">总结</h1>
+<p>haffman的思想是在haffman树上方的节点，其码字在整段码流中出现的概率高，编码后的长度短。下方的出现概率低，编码后的长度长。</p>
+
+<h2 id="两种编码方式的总结">两种编码方式的总结</h2>
+<p>哈夫曼编码与哥伦布编码的思想比较接近，通过特定的规则，将出现概率大的数字编码成较短的码流。以达到减少数据量的目的。</p>
+
+
+        <div id="disqus_container">
+            <class="comment"/>
+<div id="disqus_thread"></div>
+<script>
+    /**
+     *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+     *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+     */
+    /*
+    var disqus_config = function () {
+        this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+    };
+    */
+	/*	//disqus is walled by the great fire wall XD
+    (function() {  // DON'T EDIT BELOW THIS LINE
+        var d = document, s = d.createElement('script');
+        
+        s.src = '//mukosame.disqus.com/embed.js';
+        
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+	*/
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+        
+        </div>
+   </div>
+   
+    <div class="sidenav">
+        <h2>Blog</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/%E4%B8%A4%E7%A7%8D%E5%8F%98%E9%95%BF%E7%BC%96%E7%A0%81">两种无损变长编码</a></li>
+        
+            <li><a href="/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86-%E9%A2%9C%E8%89%B2%E6%B8%90%E5%8F%98-c">颜色渐变</a></li>
+        
+            <li><a href="/libjpeg-decode-c">libjpeg解码篇</a></li>
+        
+            <li><a href="/git-simple-use">git的简单操作</a></li>
+        
+            <li><a href="/python-copy-list">复制一个list</a></li>
+        
+        </ul>
+
+        <h2>Dump</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/test1-test2-test3">pass</a></li>
+        
+        </ul>
+
+        <h2>Project</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/test1-test2-test3">pass</a></li>
+        
+        </ul>
+    </div>
+</div>
+
+<script src="/js/post.js" type="text/javascript"></script>
+
+
+
+<!--
+todo: some elements are covered by other.maybe it's because the follow of css or js?
+<div id="container"></div>
+<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<script>
+var gitment = new Gitment({
+  id: 'location.href', // 可选。默认为 location.href  比如我本人的就删除了
+  owner: 'pkokp8',              //比如我的叫anTtutu
+  repo: 'pkokp8.github.io',                 //比如我的叫anTtutu.github.io
+  oauth: {
+    client_id: '0adcc87f3cacd0dc791e',          //比如我的828***********
+    client_secret: '9a5bc6ea6b50a06ca18592308039acd982d72381',  //比如我的49e************************
+  },
+})
+gitment.render('container')
+</script>
+-->
+
+
+    <script type="text/javascript">
+        $(function(){
+            $('.home-follow').click(function(e){
+                e.preventDefault();
+
+                if($('.home-contact').is(':visible')){
+                    $('.home-contact').slideUp(100);
+                }else{
+                    $('.home-contact').slideDown(100);
+                }
+            });
+        })
+    </script>
+</body>
+</html>
