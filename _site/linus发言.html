@@ -6,7 +6,7 @@
     * Revised:        pkokp8
     -->
     <meta charset="utf-8" />
-    <title>git的简单操作 | pkokp8's blog</title>
+    <title>大喷子linus? | pkokp8's blog</title>
     <meta name="author" content="pkokp8" />
     <meta name="renderer" content="webkit">
     <meta name="description" content="Everything about pkokp8" />
@@ -47,70 +47,52 @@
 
 <div id="content">
     <div class="entry">
-        <h1 class="entry-title"><a href="/git-simple-use" title="git的简单操作">git的简单操作</a></h1>
-        <p class="entry-date">2018-03-01</p>
-        <p>
-  记录一下git的使用。系统是ubuntu16.04. 安装好git环境  
-  首先在github上右上角点一下+，然后New repository。  
-  也可以本地创建好后push上去，不过这样也挺方便的。初学者嘛
-</p>
+        <h1 class="entry-title"><a href="/linus%E5%8F%91%E8%A8%80" title="大喷子linus?">大喷子linus?</a></h1>
+        <p class="entry-date">2018-03-15</p>
+        <ul>
+  <li>关于2018.1.2的intel cpu漏洞，linus是这么喷intel的：
+A <em>competent</em> CPU engineer would fix this by making sure speculation<br />
+doesn’t happen across protection domains. Maybe even a L1 I$ that is<br />
+keyed by CPL.</li>
+</ul>
 
-<p>
-  然后是clone一个master，例如刚才创建的pkokp8.github.io.git分支
-</p>
-<pre>
-# git clone https://github.com/pkokp8/pkokp8.github.io.git
-</pre>
+<p>I think somebody inside of Intel needs to really take a long hard look<br />
+at their CPU’s, and actually admit that they have issues instead of<br />
+writing PR blurbs that say that everything works as designed.</p>
 
-<p>接着就可以修改、提交文件</p>
-<pre>
-# echo "# test info" &gt;&gt; README.md           #新建README.md
-# git add .                                 #本地仓库新增这个文件
-# git commit -m "commit the readme"         #提交到本地，日志为-m后面""内的字符串。万一commit错误，可以不进行下一步，直接使用reset来回退代码，这样远端就不会有这次commit的记录
-# git push -u origin master                 #push到远程主线。
-</pre>
+<p>.. and that really means that all these mitigation patches should be<br />
+written with “not all CPU’s are crap” in mind.</p>
 
-<p>
-  此时可能因为没有用户名和密码，会提示错误。可以配置后再执行上述命令
-</p>
+<p>Or is Intel basically saying “we are committed to selling you shit<br />
+forever and ever, and never fixing anything”?</p>
 
-<pre>
-# git config --global user.name "pkokp8"
-# git config --global user.email "xxx@xx.com"
-</pre>
+<p>Because if that’s the case, maybe we should start looking towards the<br />
+ARM64 people more.</p>
 
-<p>
-  查看本地的提交记录，简单的可以使用。配合reset可以回退版本。注意-hard会把本地修改覆盖掉。  
-  类似svn的svn revert ./ -R;svn up -r xxx
-</p>
-<pre>
-# git log
-commit af17a9f424c5da5b4b06f90e69eb069f89124e40
-Author: pkokp8 &lt;xxx@xx.com&gt;
-Date:   Thu Mar 1 00:23:55 2018 +0800
+<p>Please talk to management. Because I really see exactly two possibibilities:</p>
 
-    modify readme
+<ul>
+  <li>Intel never intends to fix anything</li>
+</ul>
 
-# git reset -hard af17a9f424c5da5b4b06f90e69eb069f89124e40 
-</pre>
+<p>OR</p>
 
-<p>
-  接着就可以创建分支了：
-</p>
-<pre>
-# git branch firstversion                   #创建名为firstversion的分支
-# git checkout firstversion                 #切换到这个分支
-# git push -u origin firstversion           #把这个分支push到远端
-# git checkout master                       #切换回主线
-# git branch                                #查看当前处于哪条分支（看*），以及存在哪些分支
-  firstversion
-* master
-# git diff                                  #查看本地与本地仓库之间的差异
-</pre>
+<ul>
+  <li>these workarounds should have a way to disable them.</li>
+</ul>
 
-<p>
-  暂时就用到这么多。我感觉我还是要学习一个
-</p>
+<p>Which of the two is it?</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>               Linus  
+</code></pre></div></div>
+
+<ul>
+  <li>关于3.13AMD RYZEN漏洞，linus是这么喷的：<br />
+It looks like the IT security world has hit a new low.If you work in security, and think you have some morals, I think you might want to add the tag-line   “No, really, I’m not a whore. Pinky promise”to your business card. Because I thought the whole industry was corrupt before, but it’s getting ridiculous.At what point will security people admit they have an attention-whoring problem?</li>
+</ul>
+
+<p>恩，又学到了一个单词，pinky promise。。。哈哈哈，拉小拇指保证。<br />
+这漏洞的执行环境有点苛刻，需要管理员权限。有管理员权限不说砸了主机，格式化一下硬盘也不是问题啊。并且刚发现就爆出来了，感觉背后和友商有不可告人的。。。交易。</p>
 
         <div id="disqus_container">
             <class="comment"/>

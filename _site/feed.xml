@@ -8,6 +8,199 @@
 		
 			
 			<item>
+				<title>source和export</title>
+				
+					<description>&lt;h2 id=&quot;现象&quot;&gt;现象&lt;/h2&gt;
+
+&lt;h1 id=&quot;testsh中将abc赋值为1&quot;&gt;test.sh中将ABC赋值为1&lt;/h1&gt;
+&lt;p&gt;./test.sh之后echo $ABC的内容为空&lt;br /&gt;
+source test.sh之后echo $ABC的内容为1&lt;/p&gt;
+
+&lt;h1 id=&quot;在当前shell下赋值&quot;&gt;在当前shell下赋值&lt;/h1&gt;
+&lt;p&gt;ABC=999&lt;br /&gt;
+export AAA=998&lt;br /&gt;
+在test.sh中将ABC和AAA都echo出来，得到的结果是&lt;br /&gt;
+ABC为空，AAA为998&lt;/p&gt;
+
+&lt;h2 id=&quot;原因&quot;&gt;原因&lt;/h2&gt;
+&lt;p&gt;1.当我们执行脚本的时候，是当前终端所在的shell fork一个子shell然后执行，执行完了再返回终端所在的shell。&lt;br /&gt;
+2.一个shell中的系统环境变量只对该shell或者它的子shell有效，该shell结束时变量消失（类似C语言的作用域）&lt;br /&gt;
+3.source是在当前shell中执行&lt;/p&gt;
+
+&lt;h2 id=&quot;结论&quot;&gt;结论&lt;/h2&gt;
+&lt;p&gt;1.export定义的变量只在当前shell下有效，对子shell是无效的。&lt;br /&gt;
+2.脚本中定义变量，用source去执行，可以影响父shell&lt;/p&gt;
+
+&lt;h2 id=&quot;通俗地讲&quot;&gt;通俗地讲&lt;/h2&gt;
+&lt;p&gt;直接赋值影响当前shell&lt;br /&gt;
+source可以影响父shell下的所有子shell、本身、本身的所有子shell&lt;br /&gt;
+export只能通过影响自己、本身的子shell&lt;/p&gt;
+</description>
+				
+				<pubDate>Sat, 17 Mar 2018 00:00:00 +0800</pubDate>
+				<link>http://localhost:4000/shell%E7%9A%84source%E5%92%8Cexport</link>
+				<guid isPermaLink="true">http://localhost:4000/shell%E7%9A%84source%E5%92%8Cexport</guid>
+			</item>
+			
+		
+			
+			<item>
+				<title>h264 h265码流分析</title>
+				
+					<description>&lt;h2 id=&quot;h264&quot;&gt;h264&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;SPS序列参数帧举例&lt;br /&gt;
+00 00 00 01 67 64 。。。。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;PPS图像参数帧举例&lt;br /&gt;
+00 00 00 01 68 EE。。。。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;I帧举例&lt;br /&gt;
+00 00 00 01 65 EE。。。。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;P帧举例&lt;br /&gt;
+00 00 00 01 61 E0 。。。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;00 00 00 01（也有00 00 01）分割之后的下一个字节就是NALU类型，将其转为二进制数据后第4~8位是nal单元类型&lt;/p&gt;
+
+&lt;p&gt;int type = (code &amp;amp; 0x1f);&lt;br /&gt;
+判断是否为I帧： （NALU类型  &amp;amp; 0001  1111） = 5，即是IDR slice。后面的数据即是I帧数据。不过单独的I帧无法解码，因为没有解码信息，是纯粹的裸数据。需要sps和pps才能解码。因此I帧前面一小段数据一定是SPS和PPS.当然也有可能有别的，例如sei等等&lt;/p&gt;
+
+&lt;p&gt;具体nal类型如下：&lt;/p&gt;
+&lt;pre&gt;
+/* ffmpeg/libavcodec/h264.h */
+enum {
+    NAL_SLICE           = 1,
+    NAL_DPA             = 2,
+    NAL_DPB             = 3,
+    NAL_DPC             = 4,
+    NAL_IDR_SLICE       = 5,
+    NAL_SEI             = 6,
+    NAL_SPS             = 7,
+    NAL_PPS             = 8,
+    NAL_AUD             = 9,
+    NAL_END_SEQUENCE    = 10,
+    NAL_END_STREAM      = 11,
+    NAL_FILLER_DATA     = 12,
+    NAL_SPS_EXT         = 13,
+    NAL_AUXILIARY_SLICE = 19,
+    NAL_FF_IGNORE       = 0xff0f001,
+};
+&lt;/pre&gt;
+
+&lt;h2 id=&quot;h265&quot;&gt;h265&lt;/h2&gt;
+
+&lt;p&gt;基本同上，但解码方式有差异，&amp;amp;7E后需要右移1位&lt;br /&gt;
+int type = (code &amp;amp; 0x7E)»1;&lt;/p&gt;
+
+&lt;pre&gt;
+/* ffmpeg/libavcodec/hevc.h */
+enum NALUnitType {
+    NAL_TRAIL_N    = 0,
+    NAL_TRAIL_R    = 1,
+    NAL_TSA_N      = 2,
+    NAL_TSA_R      = 3,
+    NAL_STSA_N     = 4,
+    NAL_STSA_R     = 5,
+    NAL_RADL_N     = 6,
+    NAL_RADL_R     = 7,
+    NAL_RASL_N     = 8,
+    NAL_RASL_R     = 9,
+    NAL_BLA_W_LP   = 16,
+    NAL_BLA_W_RADL = 17,
+    NAL_BLA_N_LP   = 18,
+    NAL_IDR_W_RADL = 19,
+    NAL_IDR_N_LP   = 20,
+    NAL_CRA_NUT    = 21,
+    NAL_VPS        = 32,
+    NAL_SPS        = 33,
+    NAL_PPS        = 34,
+    NAL_AUD        = 35,
+    NAL_EOS_NUT    = 36,
+    NAL_EOB_NUT    = 37,
+    NAL_FD_NUT     = 38,
+    NAL_SEI_PREFIX = 39,
+    NAL_SEI_SUFFIX = 40,
+}
+&lt;/pre&gt;
+
+&lt;p&gt;举例：
+       00 00 00 01 40  NALUnitType为 32  视频参数集         VPS
+       00 00 00 01 42  NALUnitType为 33  序列参数集         SPS
+       00 00 00 01 44  NALUnitType为 34  图像参数集         PPS
+       00 00 00 01 4E  NALUnitType为 39  补充增强信息       SEI&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;   00 00 00 01 26  NALUnitType为 19  IDR SLICE          I帧
+   00 00 00 01 02  NALUnitType为  1  非IDR SLICE        P帧
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;同264，I帧前会有VPS/SPS/PPS&lt;/p&gt;
+</description>
+				
+				<pubDate>Sat, 17 Mar 2018 00:00:00 +0800</pubDate>
+				<link>http://localhost:4000/h264_h265%E7%A0%81%E6%B5%81%E5%88%86%E6%9E%90</link>
+				<guid isPermaLink="true">http://localhost:4000/h264_h265%E7%A0%81%E6%B5%81%E5%88%86%E6%9E%90</guid>
+			</item>
+			
+		
+			
+			<item>
+				<title>大喷子linus?</title>
+				
+					<description>&lt;ul&gt;
+  &lt;li&gt;关于2018.1.2的intel cpu漏洞，linus是这么喷intel的：
+A &lt;em&gt;competent&lt;/em&gt; CPU engineer would fix this by making sure speculation&lt;br /&gt;
+doesn’t happen across protection domains. Maybe even a L1 I$ that is&lt;br /&gt;
+keyed by CPL.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I think somebody inside of Intel needs to really take a long hard look&lt;br /&gt;
+at their CPU’s, and actually admit that they have issues instead of&lt;br /&gt;
+writing PR blurbs that say that everything works as designed.&lt;/p&gt;
+
+&lt;p&gt;.. and that really means that all these mitigation patches should be&lt;br /&gt;
+written with “not all CPU’s are crap” in mind.&lt;/p&gt;
+
+&lt;p&gt;Or is Intel basically saying “we are committed to selling you shit&lt;br /&gt;
+forever and ever, and never fixing anything”?&lt;/p&gt;
+
+&lt;p&gt;Because if that’s the case, maybe we should start looking towards the&lt;br /&gt;
+ARM64 people more.&lt;/p&gt;
+
+&lt;p&gt;Please talk to management. Because I really see exactly two possibibilities:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Intel never intends to fix anything&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;OR&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;these workarounds should have a way to disable them.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Which of the two is it?&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;               Linus  
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+</description>
+				
+				<pubDate>Thu, 15 Mar 2018 00:00:00 +0800</pubDate>
+				<link>http://localhost:4000/linus%E5%8F%91%E8%A8%80</link>
+				<guid isPermaLink="true">http://localhost:4000/linus%E5%8F%91%E8%A8%80</guid>
+			</item>
+			
+		
+			
+			<item>
 				<title>两种无损变长编码</title>
 				
 					<description>&lt;p&gt;最近看了下哥伦布编码，在此记录一下。&lt;br /&gt;
@@ -877,19 +1070,6 @@ f [0, 1, 2, 3, 4] 40819608
 				<pubDate>Tue, 27 Feb 2018 00:00:00 +0800</pubDate>
 				<link>http://localhost:4000/python-copy-list</link>
 				<guid isPermaLink="true">http://localhost:4000/python-copy-list</guid>
-			</item>
-			
-		
-			
-			<item>
-				<title>pass</title>
-				
-					<description>&lt;p&gt;;&lt;/p&gt;
-</description>
-				
-				<pubDate>Sat, 01 Jan 2011 00:00:00 +0800</pubDate>
-				<link>http://localhost:4000/test1-test2-test3</link>
-				<guid isPermaLink="true">http://localhost:4000/test1-test2-test3</guid>
 			</item>
 			
 		

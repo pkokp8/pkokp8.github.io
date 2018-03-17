@@ -6,7 +6,7 @@
     * Revised:        pkokp8
     -->
     <meta charset="utf-8" />
-    <title>git的简单操作 | pkokp8's blog</title>
+    <title>h264 h265码流分析 | pkokp8's blog</title>
     <meta name="author" content="pkokp8" />
     <meta name="renderer" content="webkit">
     <meta name="description" content="Everything about pkokp8" />
@@ -47,70 +47,103 @@
 
 <div id="content">
     <div class="entry">
-        <h1 class="entry-title"><a href="/git-simple-use" title="git的简单操作">git的简单操作</a></h1>
-        <p class="entry-date">2018-03-01</p>
-        <p>
-  记录一下git的使用。系统是ubuntu16.04. 安装好git环境  
-  首先在github上右上角点一下+，然后New repository。  
-  也可以本地创建好后push上去，不过这样也挺方便的。初学者嘛
-</p>
+        <h1 class="entry-title"><a href="/h264_h265%E7%A0%81%E6%B5%81%E5%88%86%E6%9E%90" title="h264 h265码流分析">h264 h265码流分析</a></h1>
+        <p class="entry-date">2018-03-17</p>
+        <h2 id="h264">h264</h2>
 
-<p>
-  然后是clone一个master，例如刚才创建的pkokp8.github.io.git分支
-</p>
+<ul>
+  <li>
+    <p>SPS序列参数帧举例<br />
+00 00 00 01 67 64 。。。。</p>
+  </li>
+  <li>
+    <p>PPS图像参数帧举例<br />
+00 00 00 01 68 EE。。。。</p>
+  </li>
+  <li>
+    <p>I帧举例<br />
+00 00 00 01 65 EE。。。。</p>
+  </li>
+  <li>
+    <p>P帧举例<br />
+00 00 00 01 61 E0 。。。</p>
+  </li>
+</ul>
+
+<p>00 00 00 01（也有00 00 01）分割之后的下一个字节就是NALU类型，将其转为二进制数据后第4~8位是nal单元类型</p>
+
+<p>int type = (code &amp; 0x1f);<br />
+判断是否为I帧： （NALU类型  &amp; 0001  1111） = 5，即是IDR slice。后面的数据即是I帧数据。不过单独的I帧无法解码，因为没有解码信息，是纯粹的裸数据。需要sps和pps才能解码。因此I帧前面一小段数据一定是SPS和PPS.当然也有可能有别的，例如sei等等</p>
+
+<p>具体nal类型如下：</p>
 <pre>
-# git clone https://github.com/pkokp8/pkokp8.github.io.git
+/* ffmpeg/libavcodec/h264.h */
+enum {
+    NAL_SLICE           = 1,
+    NAL_DPA             = 2,
+    NAL_DPB             = 3,
+    NAL_DPC             = 4,
+    NAL_IDR_SLICE       = 5,
+    NAL_SEI             = 6,
+    NAL_SPS             = 7,
+    NAL_PPS             = 8,
+    NAL_AUD             = 9,
+    NAL_END_SEQUENCE    = 10,
+    NAL_END_STREAM      = 11,
+    NAL_FILLER_DATA     = 12,
+    NAL_SPS_EXT         = 13,
+    NAL_AUXILIARY_SLICE = 19,
+    NAL_FF_IGNORE       = 0xff0f001,
+};
 </pre>
 
-<p>接着就可以修改、提交文件</p>
-<pre>
-# echo "# test info" &gt;&gt; README.md           #新建README.md
-# git add .                                 #本地仓库新增这个文件
-# git commit -m "commit the readme"         #提交到本地，日志为-m后面""内的字符串。万一commit错误，可以不进行下一步，直接使用reset来回退代码，这样远端就不会有这次commit的记录
-# git push -u origin master                 #push到远程主线。
-</pre>
+<h2 id="h265">h265</h2>
 
-<p>
-  此时可能因为没有用户名和密码，会提示错误。可以配置后再执行上述命令
-</p>
+<p>基本同上，但解码方式有差异，&amp;7E后需要右移1位<br />
+int type = (code &amp; 0x7E)»1;</p>
 
 <pre>
-# git config --global user.name "pkokp8"
-# git config --global user.email "xxx@xx.com"
+/* ffmpeg/libavcodec/hevc.h */
+enum NALUnitType {
+    NAL_TRAIL_N    = 0,
+    NAL_TRAIL_R    = 1,
+    NAL_TSA_N      = 2,
+    NAL_TSA_R      = 3,
+    NAL_STSA_N     = 4,
+    NAL_STSA_R     = 5,
+    NAL_RADL_N     = 6,
+    NAL_RADL_R     = 7,
+    NAL_RASL_N     = 8,
+    NAL_RASL_R     = 9,
+    NAL_BLA_W_LP   = 16,
+    NAL_BLA_W_RADL = 17,
+    NAL_BLA_N_LP   = 18,
+    NAL_IDR_W_RADL = 19,
+    NAL_IDR_N_LP   = 20,
+    NAL_CRA_NUT    = 21,
+    NAL_VPS        = 32,
+    NAL_SPS        = 33,
+    NAL_PPS        = 34,
+    NAL_AUD        = 35,
+    NAL_EOS_NUT    = 36,
+    NAL_EOB_NUT    = 37,
+    NAL_FD_NUT     = 38,
+    NAL_SEI_PREFIX = 39,
+    NAL_SEI_SUFFIX = 40,
+}
 </pre>
 
-<p>
-  查看本地的提交记录，简单的可以使用。配合reset可以回退版本。注意-hard会把本地修改覆盖掉。  
-  类似svn的svn revert ./ -R;svn up -r xxx
-</p>
-<pre>
-# git log
-commit af17a9f424c5da5b4b06f90e69eb069f89124e40
-Author: pkokp8 &lt;xxx@xx.com&gt;
-Date:   Thu Mar 1 00:23:55 2018 +0800
+<p>举例：
+       00 00 00 01 40  NALUnitType为 32  视频参数集         VPS
+       00 00 00 01 42  NALUnitType为 33  序列参数集         SPS
+       00 00 00 01 44  NALUnitType为 34  图像参数集         PPS
+       00 00 00 01 4E  NALUnitType为 39  补充增强信息       SEI</p>
 
-    modify readme
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   00 00 00 01 26  NALUnitType为 19  IDR SLICE          I帧
+   00 00 00 01 02  NALUnitType为  1  非IDR SLICE        P帧
+</code></pre></div></div>
 
-# git reset -hard af17a9f424c5da5b4b06f90e69eb069f89124e40 
-</pre>
-
-<p>
-  接着就可以创建分支了：
-</p>
-<pre>
-# git branch firstversion                   #创建名为firstversion的分支
-# git checkout firstversion                 #切换到这个分支
-# git push -u origin firstversion           #把这个分支push到远端
-# git checkout master                       #切换回主线
-# git branch                                #查看当前处于哪条分支（看*），以及存在哪些分支
-  firstversion
-* master
-# git diff                                  #查看本地与本地仓库之间的差异
-</pre>
-
-<p>
-  暂时就用到这么多。我感觉我还是要学习一个
-</p>
+<p>同264，I帧前会有VPS/SPS/PPS</p>
 
         <div id="disqus_container">
             <class="comment"/>
