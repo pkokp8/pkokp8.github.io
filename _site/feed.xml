@@ -185,8 +185,14 @@ arp的作用是获取对端的物理地址(mac)&lt;br /&gt;
 实现http服务后，就可以根据get、post等消息，实现一个不通过串口却能在boot下升级整个镜像的功能了。&lt;br /&gt;
 不过要做这些，工作量巨大。&lt;/p&gt;
 
-&lt;p&gt;=========
-即使不懂这些东西，有一个简单的框架，uip。了解一下&lt;/p&gt;
+&lt;p&gt;=========&lt;br /&gt;
+即使不懂这些东西，有一个简单的框架，uip。了解一下&lt;br /&gt;
+游泳健身，了解一下&lt;/p&gt;
+
+&lt;p&gt;=========&lt;br /&gt;
+补充一下eth帧格式。markdown空格编辑太不优雅了。。。换张图片吧。
+&lt;img src=&quot;/images/netdriver/netdriver.png&quot; alt=&quot;avatar&quot; /&gt;
+Ethernet II和IEEE802.3的帧格式比较类似，主要的不同点在于前者定义的2字节的类型，而后者定义的是2字节的长度；所幸的是，后者定义的有效长度值与前者定义的有效类型值无一相同，这样就容易区分两种帧格式了。&lt;/p&gt;
 </description>
 				
 				<pubDate>Sat, 17 Mar 2018 00:00:00 +0800</pubDate>
