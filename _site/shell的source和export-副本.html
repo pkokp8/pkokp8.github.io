@@ -6,7 +6,7 @@
     * Revised:        pkokp8
     -->
     <meta charset="utf-8" />
-    <title>git的简单操作 | pkokp8's blog</title>
+    <title>source和export | pkokp8's blog</title>
     <meta name="author" content="pkokp8" />
     <meta name="renderer" content="webkit">
     <meta name="description" content="Everything about pkokp8" />
@@ -47,70 +47,33 @@
 
 <div id="content">
     <div class="entry">
-        <h1 class="entry-title"><a href="/git-simple-use" title="git的简单操作">git的简单操作</a></h1>
-        <p class="entry-date">2018-03-01</p>
-        <p>
-  记录一下git的使用。系统是ubuntu16.04. 安装好git环境  
-  首先在github上右上角点一下+，然后New repository。  
-  也可以本地创建好后push上去，不过这样也挺方便的。初学者嘛
-</p>
+        <h1 class="entry-title"><a href="/shell%E7%9A%84source%E5%92%8Cexport-%E5%89%AF%E6%9C%AC" title="source和export">source和export</a></h1>
+        <p class="entry-date">2018-03-17</p>
+        <h2 id="现象">现象</h2>
 
-<p>
-  然后是clone一个master，例如刚才创建的pkokp8.github.io.git分支
-</p>
-<pre>
-# git clone https://github.com/pkokp8/pkokp8.github.io.git
-</pre>
+<h1 id="testsh中将abc赋值为1">test.sh中将ABC赋值为1</h1>
+<p>./test.sh之后echo $ABC的内容为空<br />
+source test.sh之后echo $ABC的内容为1</p>
 
-<p>接着就可以修改、提交文件</p>
-<pre>
-# echo "# test info" &gt;&gt; README.md           #新建README.md
-# git add .                                 #本地仓库新增这个文件
-# git commit -m "commit the readme"         #提交到本地，日志为-m后面""内的字符串。万一commit错误，可以不进行下一步，直接使用reset来回退代码，这样远端就不会有这次commit的记录
-# git push -u origin master                 #push到远程主线。
-</pre>
+<h1 id="在当前shell下赋值">在当前shell下赋值</h1>
+<p>ABC=999<br />
+export AAA=998<br />
+在test.sh中将ABC和AAA都echo出来，得到的结果是<br />
+ABC为空，AAA为998</p>
 
-<p>
-  此时可能因为没有用户名和密码，会提示错误。可以配置后再执行上述命令
-</p>
+<h2 id="原因">原因</h2>
+<p>1.当我们执行脚本的时候，是当前终端所在的shell fork一个子shell然后执行，执行完了再返回终端所在的shell。<br />
+2.一个shell中的系统环境变量只对该shell或者它的子shell有效，该shell结束时变量消失（类似C语言的作用域）<br />
+3.source是在当前shell中执行</p>
 
-<pre>
-# git config --global user.name "pkokp8"
-# git config --global user.email "xxx@xx.com"
-</pre>
+<h2 id="结论">结论</h2>
+<p>1.export定义的变量只在当前shell下有效，对子shell是无效的。<br />
+2.脚本中定义变量，用source去执行，可以影响父shell</p>
 
-<p>
-  查看本地的提交记录，简单的可以使用。配合reset可以回退版本。注意-hard会把本地修改覆盖掉。  
-  类似svn的svn revert ./ -R;svn up -r xxx
-</p>
-<pre>
-# git log
-commit af17a9f424c5da5b4b06f90e69eb069f89124e40
-Author: pkokp8 &lt;xxx@xx.com&gt;
-Date:   Thu Mar 1 00:23:55 2018 +0800
-
-    modify readme
-
-# git reset -hard af17a9f424c5da5b4b06f90e69eb069f89124e40 
-</pre>
-
-<p>
-  接着就可以创建分支了：
-</p>
-<pre>
-# git branch firstversion                   #创建名为firstversion的分支
-# git checkout firstversion                 #切换到这个分支
-# git push -u origin firstversion           #把这个分支push到远端
-# git checkout master                       #切换回主线
-# git branch                                #查看当前处于哪条分支（看*），以及存在哪些分支
-  firstversion
-* master
-# git diff                                  #查看本地与本地仓库之间的差异
-</pre>
-
-<p>
-  暂时就用到这么多。我感觉我还是要学习一个
-</p>
+<h2 id="通俗地讲">通俗地讲</h2>
+<p>直接赋值影响当前shell<br />
+source可以影响父shell下的所有子shell、本身、本身的所有子shell<br />
+export只能通过影响自己、本身的子shell</p>
 
         <div id="disqus_container">
             <class="comment"/>

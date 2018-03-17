@@ -6,7 +6,7 @@
     * Revised:        pkokp8
     -->
     <meta charset="utf-8" />
-    <title>source和export | pkokp8's blog</title>
+    <title>gdb的简单使用 | pkokp8's blog</title>
     <meta name="author" content="pkokp8" />
     <meta name="renderer" content="webkit">
     <meta name="description" content="Everything about pkokp8" />
@@ -47,33 +47,88 @@
 
 <div id="content">
     <div class="entry">
-        <h1 class="entry-title"><a href="/shell%E7%9A%84source%E5%92%8Cexport" title="source和export">source和export</a></h1>
+        <h1 class="entry-title"><a href="/gdb%E7%9A%84%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8" title="gdb的简单使用">gdb的简单使用</a></h1>
         <p class="entry-date">2018-03-17</p>
-        <h2 id="现象">现象</h2>
+        <ul>
+  <li>ulimit -c生成coredump</li>
+  <li>gdb processname coredump</li>
+  <li>bt 查看堆栈会看到“?”，表明这个进程无法追踪到符号表。可能是编译时或编译后为了缩小可执行文件的体积，strip了符号表</li>
+</ul>
+<pre>
+(gdb) bt
+#0  0xb6f718e8 in ?? () from /lib/libxxx.so
+#1  0xb6f71ed0 in ?? () from /lib/libxxx.so
+</pre>
+<ul>
+  <li>symbol-file processname.sym
+    <blockquote>
+      <p>获取processname.sym文件到某个路径下</p>
+    </blockquote>
+  </li>
+  <li>info sharedlibrary</li>
+</ul>
+<pre>
+(gdb) info sharedlibrary 
+From        To          Syms Read   Shared Object Library
+0xb6eee2f4  0xb6f75a30  Yes (*)     /lib/libxxx.so
+0xb6ec8f80  0xb6ed6c44  Yes (*)     /lib/libpthread.so.0
+0xb6d0c870  0xb6deb4cc  Yes (*)     /lib/libyyy.so
+0xb6ce3760  0xb6ce7238  Yes (*)     /lib/libzzz.so.1
+</pre>
+<blockquote>
+  <p>获取libxxx.so.sym文件到某个路径下</p>
+</blockquote>
 
-<h1 id="testsh中将abc赋值为1">test.sh中将ABC赋值为1</h1>
-<p>./test.sh之后echo $ABC的内容为空<br />
-source test.sh之后echo $ABC的内容为1</p>
+<ul>
+  <li>add-symbol-file libxxx.so.sym 0xb6eee2f4</li>
+  <li>bt 再次查看堆栈。此时”?”应该已经消失。如果还没有，继续上述步骤</li>
+</ul>
 
-<h1 id="在当前shell下赋值">在当前shell下赋值</h1>
-<p>ABC=999<br />
-export AAA=998<br />
-在test.sh中将ABC和AAA都echo出来，得到的结果是<br />
-ABC为空，AAA为998</p>
+<p>那么符号表怎么来？
+编译时可以通过objcopy将符号表导出到其他位置。然后通过strip将可执行文件中的符号表去除。
+这样有两个好处
+1.减小了可执行文件的体积。
+2.出问题了依然可以用gdb进行debug调试</p>
 
-<h2 id="原因">原因</h2>
-<p>1.当我们执行脚本的时候，是当前终端所在的shell fork一个子shell然后执行，执行完了再返回终端所在的shell。<br />
-2.一个shell中的系统环境变量只对该shell或者它的子shell有效，该shell结束时变量消失（类似C语言的作用域）<br />
-3.source是在当前shell中执行</p>
+<pre>
+INPUT_PATH=$1			#设定可执行文件的路径
+OUTPUT_PATH=$2			#设定输出符号表的路径
 
-<h2 id="结论">结论</h2>
-<p>1.export定义的变量只在当前shell下有效，对子shell是无效的。<br />
-2.脚本中定义变量，用source去执行，可以影响父shell</p>
+for i in `ls -X $INPUT_PATH`		#遍历可执行文件路径下的所有文件
+do
+	$OBJCOPY --only-keep-debug $INPUT_PATH/$i $OUTPUT_PATH/$i.sym	#objcopy导出符号表
+	$STRIP $INPUT_PATH/$i											#strip去除符号表
+	$STRIP --remove-section=.comment $INPUT_PATH/$i					#strip去除注释段
+done
+</pre>
 
-<h2 id="通俗地讲">通俗地讲</h2>
-<p>直接赋值影响当前shell<br />
-source可以影响父shell下的所有子shell、本身、本身的所有子shell<br />
-export只能通过影响自己、本身的子shell</p>
+<p>具体其他操作可以找找objcopy和strip如何使用</p>
+
+<p>比如可以这么调试：</p>
+<pre>
+gdb
+(gdb) shell
+cd image/
+mv symbol/ lib/			#gdb默认从debug-file-directory的lib下导入符号表
+exit
+(gdb) set debug-file-directory image/
+(gdb) nosharedlibrary
+(gdb) sharedlibrary
+(gdb) shell
+./processname &amp;
+exit
+(gdb) attach $(pifof processname)
+(gdb) thread info
+(gdb) thread 24
+(gdb) c
+(gdb) bt
+(gdb) thread 24
+(gdb) bt
+
+
+
+</pre>
+
 
         <div id="disqus_container">
             <class="comment"/>
@@ -109,9 +164,13 @@ export只能通过影响自己、本身的子shell</p>
         <h2>Blog</h2>
         <ul class="artical-list">
         
-            <li><a href="/shell%E7%9A%84source%E5%92%8Cexport">source和export</a></li>
+            <li><a href="/yuv%E7%9A%84%E5%90%84%E7%A7%8D%E6%A0%BC%E5%BC%8F">yuv的各种格式</a></li>
+        
+            <li><a href="/shell%E7%9A%84source%E5%92%8Cexport-%E5%89%AF%E6%9C%AC">source和export</a></li>
         
             <li><a href="/h264_h265%E7%A0%81%E6%B5%81%E5%88%86%E6%9E%90">h264 h265码流分析</a></li>
+        
+            <li><a href="/gdb%E7%9A%84%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8">gdb的简单使用</a></li>
         
             <li><a href="/%E4%B8%A4%E7%A7%8D%E5%8F%98%E9%95%BF%E7%BC%96%E7%A0%81">两种无损变长编码</a></li>
         
