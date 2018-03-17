@@ -26,12 +26,19 @@
         </div>
         <div class="home-contact">
             <a href="https://github.com/pkokp8/" target="_blank" style="margin-left:-5px;"><img src="https://github.com/favicon.ico" alt="" width="22"/></a>
-            <a href="http://tieba.baidu.com/f?kw=firefox&fr=index&red_tag=x1116532383" target="_blank" style="text-align:center;"><img src="https://tb1.bdstatic.com/tb/favicon.ico" alt="" width="22"/></a>
-            <a href="https://leetcode.com/pkokp8/" target="_blank" style="text-align:center;"><img src="https://leetcode.com/favicon-32x32.png" alt="" width="22"/></a>
+			<!--
+				<a href="http://tieba.baidu.com/f?kw=firefox&fr=index&red_tag=x1116532383" target="_blank" style="text-align:center;"><img src="https://tb1.bdstatic.com/tb/favicon.ico" alt="" width="22"/></a>
+			-->
+            <!--
+			<a href="https://leetcode.com/pkokp8/" target="_blank" style="text-align:center;"><img src="https://leetcode.com/favicon-32x32.png" alt="" width="22"/></a>
+			-->
             <!--
 			<a href="/feed.xml" target="_blank" style="text-align:right"><img src="http://static.firefoxchina.cn/img/201711/7_5a0ba48885d170.png" alt="" width="22"/></a>
 			-->
         </div>
+		<div class="home-contact">
+			<a href="mailto:pkokp8@gmail.com" target="_blank" style="text-align:center;"><img src="/images/mail.jpg" alt="" width="22"/>联系pkokp8</a>
+		</div>
     </div>
 
     <link rel="stylesheet" href="/js/prettify/prettify.css" />
@@ -84,10 +91,10 @@ From        To          Syms Read   Shared Object Library
   <li>bt 再次查看堆栈。此时”?”应该已经消失。如果还没有，继续上述步骤</li>
 </ul>
 
-<p>那么符号表怎么来？
-编译时可以通过objcopy将符号表导出到其他位置。然后通过strip将可执行文件中的符号表去除。
-这样有两个好处
-1.减小了可执行文件的体积。
+<p>那么符号表怎么来？<br />
+编译时可以通过objcopy将符号表导出到其他位置。然后通过strip将可执行文件中的符号表去除。<br />
+这样有两个好处<br />
+1.减小了可执行文件的体积。<br />
 2.出问题了依然可以用gdb进行debug调试</p>
 
 <pre>

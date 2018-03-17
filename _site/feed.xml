@@ -202,10 +202,10 @@ From        To          Syms Read   Shared Object Library
   &lt;li&gt;bt 再次查看堆栈。此时”?”应该已经消失。如果还没有，继续上述步骤&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;那么符号表怎么来？
-编译时可以通过objcopy将符号表导出到其他位置。然后通过strip将可执行文件中的符号表去除。
-这样有两个好处
-1.减小了可执行文件的体积。
+&lt;p&gt;那么符号表怎么来？&lt;br /&gt;
+编译时可以通过objcopy将符号表导出到其他位置。然后通过strip将可执行文件中的符号表去除。&lt;br /&gt;
+这样有两个好处&lt;br /&gt;
+1.减小了可执行文件的体积。&lt;br /&gt;
 2.出问题了依然可以用gdb进行debug调试&lt;/p&gt;
 
 &lt;pre&gt;
@@ -456,20 +456,15 @@ ABABDAABCD的编码就是&lt;br /&gt;
 			<item>
 				<title>颜色渐变</title>
 				
-					<description>&lt;p&gt;
-  打开了windows的cmd--mspaint工具。想选用一种颜色，点到了编辑颜色的地方。发现这颜色渐变很神奇，横向纵向的颜色都是变化的。
-&lt;/p&gt;
-&lt;p&gt;
-  于是决定写一份代码来实现这个颜色渐变的功能。一开始很sb的认为rgb的渐变不是很简单嘛，rgb888的最大色是0xffffff，最小色是0x0。(0xffffff-0x0)/(w*h)得到每个像素点的变化step，然后跟随像素点的座标不断加step。
-&lt;/p&gt;
-&lt;p&gt;
-  仔细一想，这特么不是sb是什么。渐变是两种分量颜色不变，一种颜色分量慢慢变化。前面的那种算法画出来的图像简直一坨翔，惨不忍睹（其实看多了也还好？）。
-&lt;/p&gt;
-&lt;p&gt;
-  幸好windows的画图工具给了颜色编辑时的每个点的rgb值，观察规律。最后用c语言，生成了一副rgb裸数据的图像。图像可以用7yuv查看。    
-  话不多说，上代码。
-&lt;/p&gt;
+					<description>&lt;p&gt;打开了windows的cmd–mspaint工具。想选用一种颜色，点到了编辑颜色的地方。发现这颜色渐变很神奇，横向纵向的颜色都是变化的。 &lt;br /&gt;
+&lt;img src=&quot;/images/颜色渐变/mspaint.png&quot; alt=&quot;avatar&quot; /&gt;&lt;/p&gt;
 
+&lt;p&gt;于是决定写一份代码来实现这个颜色渐变的功能。&lt;br /&gt;
+一开始很sb的认为rgb的渐变不是很简单嘛，rgb888的最大色是0xffffff，最小色是0x0。(0xffffff-0x0)/(w*h)得到每个像素点的变化step，然后跟随像素点的座标不断加step。&lt;br /&gt;
+写完后发现不对。仔细一想，这特么不是sb是什么。渐变是两种分量颜色不变，一种颜色分量慢慢变化。前面的那种算法画出来的图像简直一坨翔，惨不忍睹（其实看多了也还好？）。&lt;br /&gt;
+幸好windows的画图工具给了颜色编辑时的每个点的rgb值，观察规律。最后用c语言，生成了一副rgb裸数据的图像。图像可以用7yuv查看。&lt;/p&gt;
+
+&lt;p&gt;话不多说，上代码。&lt;/p&gt;
 &lt;pre&gt;
 #include &amp;lt;stdio.h&amp;gt;
 
@@ -615,7 +610,7 @@ int main()
 color.rgb
 
 &lt;/pre&gt;
-&lt;p&gt;&lt;img src=&quot;/images/color.png&quot; alt=&quot;avatar&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/images/颜色渐变/color.png&quot; alt=&quot;avatar&quot; /&gt;&lt;/p&gt;
 </description>
 				
 				<pubDate>Thu, 08 Mar 2018 00:00:00 +0800</pubDate>

@@ -26,12 +26,19 @@
         </div>
         <div class="home-contact">
             <a href="https://github.com/pkokp8/" target="_blank" style="margin-left:-5px;"><img src="https://github.com/favicon.ico" alt="" width="22"/></a>
-            <a href="http://tieba.baidu.com/f?kw=firefox&fr=index&red_tag=x1116532383" target="_blank" style="text-align:center;"><img src="https://tb1.bdstatic.com/tb/favicon.ico" alt="" width="22"/></a>
-            <a href="https://leetcode.com/pkokp8/" target="_blank" style="text-align:center;"><img src="https://leetcode.com/favicon-32x32.png" alt="" width="22"/></a>
+			<!--
+				<a href="http://tieba.baidu.com/f?kw=firefox&fr=index&red_tag=x1116532383" target="_blank" style="text-align:center;"><img src="https://tb1.bdstatic.com/tb/favicon.ico" alt="" width="22"/></a>
+			-->
+            <!--
+			<a href="https://leetcode.com/pkokp8/" target="_blank" style="text-align:center;"><img src="https://leetcode.com/favicon-32x32.png" alt="" width="22"/></a>
+			-->
             <!--
 			<a href="/feed.xml" target="_blank" style="text-align:right"><img src="http://static.firefoxchina.cn/img/201711/7_5a0ba48885d170.png" alt="" width="22"/></a>
 			-->
         </div>
+		<div class="home-contact">
+			<a href="mailto:pkokp8@gmail.com" target="_blank" style="text-align:center;"><img src="/images/mail.jpg" alt="" width="22"/>联系pkokp8</a>
+		</div>
     </div>
 
     <link rel="stylesheet" href="/js/prettify/prettify.css" />
@@ -49,20 +56,15 @@
     <div class="entry">
         <h1 class="entry-title"><a href="/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86-%E9%A2%9C%E8%89%B2%E6%B8%90%E5%8F%98-c" title="颜色渐变">颜色渐变</a></h1>
         <p class="entry-date">2018-03-08</p>
-        <p>
-  打开了windows的cmd--mspaint工具。想选用一种颜色，点到了编辑颜色的地方。发现这颜色渐变很神奇，横向纵向的颜色都是变化的。
-</p>
-<p>
-  于是决定写一份代码来实现这个颜色渐变的功能。一开始很sb的认为rgb的渐变不是很简单嘛，rgb888的最大色是0xffffff，最小色是0x0。(0xffffff-0x0)/(w*h)得到每个像素点的变化step，然后跟随像素点的座标不断加step。
-</p>
-<p>
-  仔细一想，这特么不是sb是什么。渐变是两种分量颜色不变，一种颜色分量慢慢变化。前面的那种算法画出来的图像简直一坨翔，惨不忍睹（其实看多了也还好？）。
-</p>
-<p>
-  幸好windows的画图工具给了颜色编辑时的每个点的rgb值，观察规律。最后用c语言，生成了一副rgb裸数据的图像。图像可以用7yuv查看。    
-  话不多说，上代码。
-</p>
+        <p>打开了windows的cmd–mspaint工具。想选用一种颜色，点到了编辑颜色的地方。发现这颜色渐变很神奇，横向纵向的颜色都是变化的。 <br />
+<img src="/images/颜色渐变/mspaint.png" alt="avatar" /></p>
 
+<p>于是决定写一份代码来实现这个颜色渐变的功能。<br />
+一开始很sb的认为rgb的渐变不是很简单嘛，rgb888的最大色是0xffffff，最小色是0x0。(0xffffff-0x0)/(w*h)得到每个像素点的变化step，然后跟随像素点的座标不断加step。<br />
+写完后发现不对。仔细一想，这特么不是sb是什么。渐变是两种分量颜色不变，一种颜色分量慢慢变化。前面的那种算法画出来的图像简直一坨翔，惨不忍睹（其实看多了也还好？）。<br />
+幸好windows的画图工具给了颜色编辑时的每个点的rgb值，观察规律。最后用c语言，生成了一副rgb裸数据的图像。图像可以用7yuv查看。</p>
+
+<p>话不多说，上代码。</p>
 <pre>
 #include &lt;stdio.h&gt;
 
@@ -208,7 +210,7 @@ int main()
 color.rgb
 
 </pre>
-<p><img src="/images/color.png" alt="avatar" /></p>
+<p><img src="/images/颜色渐变/color.png" alt="avatar" /></p>
 
         <div id="disqus_container">
             <class="comment"/>
