@@ -8,14 +8,190 @@
 		
 			
 			<item>
-				<title>yuv的各种格式</title>
+				<title>uboot的网卡驱动</title>
 				
-					<description>&lt;h2 id=&quot;pass&quot;&gt;pass&lt;/h2&gt;
+					<description>&lt;h2 id=&quot;uboot网卡驱动&quot;&gt;uboot网卡驱动&lt;/h2&gt;
+
+&lt;p&gt;uboot的启动流程是这样的：&lt;br /&gt;
+cpu的片上rom会执行一段内部的代码，这段代码不可见、不可修改，一般是cpu厂家制作的。代码的功能是用来引导uboot。uboot的入口是start.S &lt;br /&gt;
+start.S中都是一些汇编，cpu厂家会根据自己的uboot调整里面的一些逻辑，但大致流程依然是跳转执行board.c中的C语言的代码。&lt;br /&gt;
+board.c的入口不确定。不同厂家会改接口名。例如sunxi的入口就是board_init_r，而海思则是start_armboot。要找到这个入口也很简单，因为一般没人改main.c–main_loop，谁调用了main_loop谁就是入口。&lt;br /&gt;
+不过这次不是讲uboot的启动流程，主要讲网卡驱动的驱动流程。&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;sunxi平台&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre&gt;
+board_init_r
+	eth_initialize
+		miiphy_init  //初始化一个mii_devs链表，并把current_mii指向NULL
+		board_eth_init
+			geth_initialize
+				dev = (struct eth_device *)malloc(sizeof *dev);		//申请一个eth设备
+				strcpy(dev-&amp;gt;name, &quot;eth0&quot;);							//命名为eth0
+				random_ether_addr									//这个很有意思，随机产生一个mac地址
+				//函数指针的初始化
+				geth_sys_init										//sunxi平台会根据配置文件来初始化一些寄存器。
+				eth_register										//注册一个eth。实际就是设定网卡结构体的状态等等。
+				miiphy_register										//将mdio的操作注册进这个网卡结构体
+&lt;/pre&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;海思平台&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre&gt;
+start_armboot
+	eth_initialize
+		miiphy_init//把mii_devs放入链表
+			stmmac_init//在do_ping中也有做这一步
+				getenv(&quot;mdio_intf&quot;)
+				getenv(&quot;phyaddr0&quot;),sprintf(GMAC0_PHY_NAME, &quot;mdio0&quot;);
+				getenv(&quot;phyaddr1&quot;),sprintf(GMAC1_PHY_NAME, &quot;mdio1&quot;);
+				stmmac_mdiobus_driver_init
+					1.设置内存基地址（海思TOE）
+					2.stmmac_mdio_clk_init
+					3.miiphy_register
+						list_for_each遍历链表找mii_devs
+						比较链表节点（list_entry）的name和GMAC0_PHY_NAME是否相等，相等说明已注册，否则就未注册
+						申请内存（设备）
+						注册read和write函数//stmmac_mdiobus_read，stmmac_mdiobus_write
+						把新申请的设备放入链表末尾（list_add_tail）
+					4.设置当前mii设备
+				stmmac_dev_probe_init
+					stmmac_sys_init//写海思寄存器初始化
+					stmmac_init_hw_desc_queue//写海思寄存器初始化
+&lt;/pre&gt;
+
+&lt;p&gt;至此，网卡的初始化流程就结束了。如果配置都ok，那么只要再实现一个ping命令或tftp命令，就可以和外界通信了。&lt;/p&gt;
+
+&lt;h2 id=&quot;ping的流程&quot;&gt;ping的流程&lt;/h2&gt;
+&lt;p&gt;uboot的ping命令非常简单。入口是do_ping。
+用法和windows下或linux下是一样的。
+do_ping首先把argv[1]赋值给NetPingIP，然后调用NetLoop(PING) 来初始化ping命令。&lt;/p&gt;
+
+&lt;h1 id=&quot;netloop&quot;&gt;NetLoop&lt;/h1&gt;
+&lt;p&gt;首先调用了eth_halt。然后设定网卡状态为ETH_STATE_PASSIVE。&lt;br /&gt;
+调用eth_halt的原因我认为是uboot没有进程调度、中断的概念，万一网卡还在工作，可能导致此次调用不成功。因此需要直接重新初始化一次网卡驱动。&lt;br /&gt;
+上面作了去初始化的操作，那么接下去一定会初始化网卡。&lt;/p&gt;
+
+&lt;h1 id=&quot;eth_init&quot;&gt;eth_init&lt;/h1&gt;
+&lt;pre&gt;
+/* eth.c--eth_init */
+		if (eth_current-&amp;gt;init(eth_current,bis) &amp;gt;= 0) {		//实际调用geth_init
+			eth_current-&amp;gt;state = ETH_STATE_ACTIVE;
+&lt;/pre&gt;
+
+&lt;h1 id=&quot;netinitloop&quot;&gt;NetInitLoop&lt;/h1&gt;
+&lt;p&gt;初始化网卡之后，这里取一些ping命令过程需要用到的参数给全局变量。例如netmask，ourip、gatewayip等等&lt;/p&gt;
+
+&lt;h1 id=&quot;pingstart&quot;&gt;PingStart&lt;/h1&gt;
+&lt;p&gt;获取到参数后，就需要发送ping消息了。这个接口是ping命令的实际工作函数的一小半。为什么说一小半呢？因为ping的流程是发送一个echo request，然后接收一个reply。并且发送request需要知道对端的mac地址。&lt;br /&gt;
+此处甚至不知道对方的mac地址，也就没有办法把ping包发出去。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;PingSend–NetSetEther(pkt, mac, PROT_IP);
+这个函数的作用是封装ethernet帧的头部，此处是ping包的一部分的封装。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre&gt;
+mac    ：目的host的mac，在这里全为0，因为现在只知道目的主机的ip，还不知道mac
+PROT_IP: 该ethernet帧里封装的是IP包。ethernet帧分三种类型，根据ethernet的type来判断是哪种类型。
+type:
+PROT_IP 0x0800 /* IP protocol */
+PROT_ARP 0x0806 /* IP ARP protocol */
+PROT_RARP 0x8035 /* IP ARP protocol */
+&lt;/pre&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;接下去继续封装icmp包：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre&gt;
+	ip = (volatile IP_t *)pkt;
+
+	/*
+	 * Construct an IP and ICMP header.
+	 * (need to set no fragment bit - XXX)
+	 */
+	/* IP_HDR_SIZE / 4 (not including UDP) */
+	ip-&amp;gt;ip_hl_v  = 0x45;
+	ip-&amp;gt;ip_tos   = 0;
+	ip-&amp;gt;ip_len   = htons(IP_HDR_SIZE_NO_UDP + 8);
+	ip-&amp;gt;ip_id    = htons(NetIPID++);
+	ip-&amp;gt;ip_off   = htons(IP_FLAGS_DFRAG);	/* Don't fragment */
+	ip-&amp;gt;ip_ttl   = 255;
+	ip-&amp;gt;ip_p     = 0x01;		/* ICMP */
+	ip-&amp;gt;ip_sum   = 0;
+	/* already in network byte order */
+	NetCopyIP((void *)&amp;amp;ip-&amp;gt;ip_src, &amp;amp;NetOurIP);
+	/* - &quot;&quot; - */
+	NetCopyIP((void *)&amp;amp;ip-&amp;gt;ip_dst, &amp;amp;NetPingIP);
+	ip-&amp;gt;ip_sum   = ~NetCksum((uchar *)ip, IP_HDR_SIZE_NO_UDP / 2);
+		s = &amp;amp;ip-&amp;gt;udp_src;		/* XXX ICMP starts here */
+	s[0] = htons(0x0800);		/* echo-request, code */
+	s[1] = 0;			/* checksum */
+	s[2] = 0;			/* identifier */
+	s[3] = htons(PingSeqNo++);	/* sequence number */
+	s[1] = ~NetCksum((uchar *)s, 8/2);
+
+	/* size of the waiting packet */
+	NetArpWaitTxPacketSize =
+		(pkt - NetArpWaitTxPacket) + IP_HDR_SIZE_NO_UDP + 8;
+
+	/* and do the ARP request */
+	NetArpWaitTry = 1;
+	NetArpWaitTimerStart = get_timer(0);
+&lt;/pre&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;最后ArpRequest发送一个arp请求&lt;br /&gt;
+调用NetSetEther(pkt, NetBcastAddr, PROT_ARP);&lt;br /&gt;
+以及一些赋值，封装一个arp报文，最后通过eth_send发送出去。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;eth_send
+实际调用了geth_initialize初始化的geth_xmit函数。功能就是不断的读写寄存器来获取网卡内的数据。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;发送完arp包之后，就回到了NetLoop。发送了arp之后会通过miiphy_link读取一下phy的MII_BMSR寄存器判断一下是否是link状态。&lt;/p&gt;
+&lt;pre&gt;
+#define MII_BMSR	    0x01	/* Basic mode status register  */
+&lt;/pre&gt;
+&lt;p&gt;如果此时读取寄存器错误或不是link状态，sunxi的boot就会点一下led灯来作指示。&lt;/p&gt;
+
+&lt;p&gt;接下来就是ping的实际流程了。以下是一个死循环的开始&lt;br /&gt;
+while(1)&lt;br /&gt;
+{&lt;br /&gt;
+首先是eth_rx，内部调用了geth_recv。看名字是一个接收网卡数据的接口。实际上sunxi的boot在网卡中对这块封装的不是很好，不知道为什么这么写。&lt;br /&gt;
+这个接口不但有接收数据的操作(读写寄存器)，也有处理数据的操作(NetReceive)。&lt;br /&gt;
+第一次读取时刚发送了arp请求，因此这里先会获取到一个arpreplay(case ARPOP_REPLY)&lt;br /&gt;
+arp的作用是获取对端的物理地址(mac)&lt;br /&gt;
+接收到arpreply后就得到了对方的mac地址，发送ping的剩余的数据即可。&lt;/p&gt;
+&lt;pre&gt;
+				(void) eth_send(NetArpWaitTxPacket,
+						NetArpWaitTxPacketSize);
+&lt;/pre&gt;
+&lt;p&gt;这里NetArpWaitTxPacket在PingSend中已经初始化完成了，直接发送即可。&lt;/p&gt;
+
+&lt;p&gt;NetLoop的第二次循环(不考虑失败情况)就应该能获取到ping的返回消息，也就是ICMP_ECHO_REPLY。这里很简单，调用了回调函数PingHandler，实际就是比较一下返回ip和argvp[1]的ip是否相等。相等时设定一下NetState为NETLOOP_SUCCESS。&lt;/p&gt;
+
+&lt;p&gt;最后回到NetLoop，由于NetState状态被设为NETLOOP_SUCCESS，而NetBootFileXferSize在ping命令中一直为0.于是调用一下eth_halt关闭网卡，一个主要的ping流程就结束了。&lt;br /&gt;
+}&lt;br /&gt;
+根据返回的结果，打印“host argv[1] is alive\n”或者”ping failed; host argv[1] is not alive\n”&lt;/p&gt;
+
+&lt;h2 id=&quot;todo&quot;&gt;TODO&lt;/h2&gt;
+&lt;p&gt;实际上整个boot只实现了这些简单的发送返回的功能。复杂一点的就是tftp了。tftp虽然是基于udp的协议，但boot并没有封装的那么详细。&lt;br /&gt;
+如果要实现一些tcp下的操作，只要了解tcp的消息构造，完全可以实现一个tcp的发送。（说的简单XD）&lt;br /&gt;
+实现tcp发送后，可以在tcp的基础上实现http服务。&lt;br /&gt;
+实现http服务后，就可以根据get、post等消息，实现一个不通过串口却能在boot下升级整个镜像的功能了。&lt;br /&gt;
+不过要做这些，工作量巨大。&lt;/p&gt;
+
+&lt;p&gt;=========
+即使不懂这些东西，有一个简单的框架，uip。了解一下&lt;/p&gt;
 </description>
 				
 				<pubDate>Sat, 17 Mar 2018 00:00:00 +0800</pubDate>
-				<link>http://localhost:4000/yuv%E7%9A%84%E5%90%84%E7%A7%8D%E6%A0%BC%E5%BC%8F</link>
-				<guid isPermaLink="true">http://localhost:4000/yuv%E7%9A%84%E5%90%84%E7%A7%8D%E6%A0%BC%E5%BC%8F</guid>
+				<link>http://localhost:4000/uboot%E7%9A%84%E7%BD%91%E5%8D%A1%E9%A9%B1%E5%8A%A8</link>
+				<guid isPermaLink="true">http://localhost:4000/uboot%E7%9A%84%E7%BD%91%E5%8D%A1%E9%A9%B1%E5%8A%A8</guid>
 			</item>
 			
 		
@@ -51,8 +227,8 @@ export只能通过影响自己、本身的子shell&lt;/p&gt;
 </description>
 				
 				<pubDate>Sat, 17 Mar 2018 00:00:00 +0800</pubDate>
-				<link>http://localhost:4000/shell%E7%9A%84source%E5%92%8Cexport-%E5%89%AF%E6%9C%AC</link>
-				<guid isPermaLink="true">http://localhost:4000/shell%E7%9A%84source%E5%92%8Cexport-%E5%89%AF%E6%9C%AC</guid>
+				<link>http://localhost:4000/shell%E7%9A%84source%E5%92%8Cexport</link>
+				<guid isPermaLink="true">http://localhost:4000/shell%E7%9A%84source%E5%92%8Cexport</guid>
 			</item>
 			
 		
@@ -449,6 +625,19 @@ ABABDAABCD的编码就是&lt;br /&gt;
 				<pubDate>Wed, 14 Mar 2018 00:00:00 +0800</pubDate>
 				<link>http://localhost:4000/%E4%B8%A4%E7%A7%8D%E5%8F%98%E9%95%BF%E7%BC%96%E7%A0%81</link>
 				<guid isPermaLink="true">http://localhost:4000/%E4%B8%A4%E7%A7%8D%E5%8F%98%E9%95%BF%E7%BC%96%E7%A0%81</guid>
+			</item>
+			
+		
+			
+			<item>
+				<title>yuv的各种格式</title>
+				
+					<description>&lt;h2 id=&quot;pass&quot;&gt;pass&lt;/h2&gt;
+</description>
+				
+				<pubDate>Tue, 13 Mar 2018 00:00:00 +0800</pubDate>
+				<link>http://localhost:4000/yuv%E7%9A%84%E5%90%84%E7%A7%8D%E6%A0%BC%E5%BC%8F</link>
+				<guid isPermaLink="true">http://localhost:4000/yuv%E7%9A%84%E5%90%84%E7%A7%8D%E6%A0%BC%E5%BC%8F</guid>
 			</item>
 			
 		
@@ -1064,6 +1253,234 @@ Date:   Thu Mar 1 00:23:55 2018 +0800
 				<pubDate>Thu, 01 Mar 2018 00:00:00 +0800</pubDate>
 				<link>http://localhost:4000/git-simple-use</link>
 				<guid isPermaLink="true">http://localhost:4000/git-simple-use</guid>
+			</item>
+			
+		
+			
+			<item>
+				<title>python爬虫</title>
+				
+					<description>&lt;h2 id=&quot;一个bing的爬虫&quot;&gt;一个bing的爬虫&lt;/h2&gt;
+&lt;p&gt;作用仅限于下载一张首页的背景图。拿来作作windows桌面效果还不错。&lt;/p&gt;
+
+&lt;pre&gt;
+
+from urllib import request
+import re
+
+bingeverydayimgprefix  = 'https://www.bing.com/az/hprichbg/rb/'
+
+with request.urlopen('https://www.bing.com/') as f:
+    data = f.read()
+    #print('Status:', f.status, f.reason)
+    for k, v in f.getheaders():
+        pass
+    bingdata = data.decode('utf-8')
+
+def findimg(htmlstring):
+    return re.findall(r'\.jpg', htmlstring)
+
+print(&quot;===================&quot;)
+bracket = re.findall(r'\{.*?\}', bingdata)
+cnt = 0
+jpglist=[]
+for i in bracket:
+    if findimg(i):
+        cnt += 1
+        jpglist.append(i)
+
+print(&quot;here has %d jpg element(s)&quot; % cnt)
+truejpegurl=[]
+jpegfilename=[]
+for i in jpglist:
+    result = [x for x in re.split(&quot;/|\'|\&quot;&quot;, i) if x]
+    for j in result:
+        if findimg(j):
+            truejpegurl.append(bingeverydayimgprefix + j)
+            jpegfilename.append(j)
+print(truejpegurl)
+print(jpegfilename)
+
+print(&quot;===========================================================&quot;)
+import urllib.request
+
+def getImg(url,filename):
+    urllib.request.urlretrieve(url, filename)
+
+n=0
+for cururl in truejpegurl:
+    getImg(truejpegurl[n], jpegfilename[n])
+    n += 1
+
+&lt;/pre&gt;
+
+&lt;h2 id=&quot;一个http请求的发送&quot;&gt;一个http请求的发送&lt;/h2&gt;
+&lt;p&gt;bing到底和作者什么仇？&lt;/p&gt;
+&lt;pre&gt;
+import socket
+
+# 创建socket:
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# 连接:
+
+s.connect(('www.bing.com', 80))
+
+request = 'GET / HTTP/1.1 \r\n\
+Host: cn.bing.com\r\n\
+User-Agent:Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50\r\n\
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n\
+Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\n\
+Connection: close\r\n\
+Upgrade-Insecure-Requests: 1\r\n\
+Pragma: no-cache\r\n\
+Cache-Control: no-cache\r\n\r\n'
+
+s.send(bytes(request, encoding = &quot;utf8&quot;))
+
+# 接收:
+buffer = []
+while True:
+    d = s.recv(1024)
+    if d:
+        buffer.append(d)
+    else:
+        break
+data = b''.join(buffer)
+
+s.close()
+
+header, html = data.split(b'\r\n\r\n', 1)
+print(header.decode())
+with open('bing.html', 'wb') as f:
+    f.write(html)
+&lt;/pre&gt;
+
+&lt;h2 id=&quot;爬爬漫画&quot;&gt;爬爬漫画&lt;/h2&gt;
+&lt;p&gt;实测效果不是很好。跑了一下午一部《死神》都没爬完。还需要继续培养面向对象的编程思想。而且总是用正则，代码不简洁；应该有第三方模块可以直接import后处理获取到的一些数据
+只实现了imanhua的一小部分，manhuatai还没有实现。&lt;/p&gt;
+
+&lt;pre&gt;
+#coding=utf-8
+from urllib import request
+import re
+import base64
+import os
+from selenium import webdriver
+#browser = webdriver.PhantomJS()
+
+class manhuatai(object):      ####todo
+    def __init__(self, url):
+        self.url = url
+    def introduce(self):
+        with request.urlopen(self.url) as f:
+            data = f.read()
+            # print('Status:', f.status, f.reason)
+            for k, v in f.getheaders():
+                pass
+            self.urldata = data.decode('utf-8')                                                                 #manhuatai用了utf-8编码，因此decode参数为utf-8
+            self.urldatalist = []
+            bracket=re.findall(r'\&amp;lt;.*?\&amp;gt;', self.urldata)
+            for i in bracket:
+                self.urldatalist.append(i)
+                #print(i)
+    def setepisode2dict(self):
+        self.episodedict = {}
+        for i in self.urldatalist:
+            m = re.match(r'^.*?title\=\&quot;(.*?)\&quot;\s.*?\&quot;(.*\.html)\&quot;.*$', i)
+            if m:
+                self.episodedict[m.group(1)]=m.group(2)
+                #print(&quot;{}==={}&quot;.format(m.group(1),m.group(2)))
+
+
+    def requestepisode(self):
+        print(self.url + '/' + self.episodedict['第01期'])
+        with request.urlopen(self.url + '/' + self.episodedict['第01期']) as f:
+            data = f.read()
+            # print('Status:', f.status, f.reason)
+            #for k, v in f.getheaders():
+            #    pass
+            episodedata = data.decode('utf-8')
+            print(episodedata)                                                                                  #找不到每一张图片的url请求，先搁置
+        browser.get(self.url + '/' + self.episodedict['第01期'])                                                #用webdriver的方法去请求，实际PhantomJS是一个无界面的浏览器内核
+        print(&quot;need open line 6&quot;)
+        data = browser.page_source                                                                              #页面源码
+        #print(data)
+
+    def getImg(self, url,filename):
+        request.urlretrieve(url, filename)
+
+class iimanhua(manhuatai):
+    def introduce(self):
+        with request.urlopen(self.url) as f:                                                                    #请求介绍页，获取漫画列表
+            data = f.read()
+            # print('Status:', f.status, f.reason)
+            for k, v in f.getheaders():
+                #print(&quot;{}={}&quot;.format(k, v))
+                pass
+            #print(data.decode('gb2312', errors='ignore'))                                                      #imanhua网站用了gb2312编码，因此decode参数为gb2312
+            self.urldata = data.decode('gb2312', errors='ignore')
+            self.urldatalist = []
+            bracket=re.findall(r'\&amp;lt;.*?\&amp;gt;', self.urldata)
+            for i in bracket:
+                self.urldatalist.append(i)
+                #print(i)
+    def getImg(self, url,filename):
+        request.urlretrieve(url, filename)
+    def setepisode2dict(self):                                                                                  #将每一话的相对路径和标题存入self.episodedict
+        self.episodedict = {}
+        for i in self.urldatalist:
+            m = re.match(r'^.*?\&quot;(\/imanhua.*?\.html)\&quot;\s+title=\&quot;(.*?)\&quot;.*?target.*$', i)
+            if m:
+                self.episodedict[m.group(2)]=m.group(1)
+                #print(&quot;{}={}&quot;.format(m.group(1),m.group(2)))
+
+        for k, v in self.episodedict.items():
+            pass
+            #print(&quot;{}={}&quot;.format(k, v))    #第x话='xxx.html'
+    def requestepisode(self):                                                                                   #处理每一话
+        self.mainurl='http://www.iimanhua.com/'
+        for k, v in self.episodedict.items():
+            print(&quot;{}={}&quot;.format(k,v))
+            with request.urlopen(self.mainurl + '/' + v) as f:                                                          #打开每一话的第一页，每张图片是异步加载的。但是页面源码可以获取base64编码的图片url
+            #with request.urlopen('http://www.iimanhua.com/imanhua/9202/261288.html') as f:
+                data = f.read()
+                self.episode = data.decode('gb2312', errors='ignore')
+                m = re.findall(r'var\sqTcms_S_m_murl_e=\&quot;(.*?)\&quot;;', self.episode)
+                #print(self.episode)
+                allpicurl = str(base64.urlsafe_b64decode(m[0]), encoding = &quot;utf-8&quot;).split('$qingtiandy$')               #将var qTcms_S_m_murl_e='xxx'的内容进行base64解码，并通过$qingtiandy$分割
+                print(allpicurl)                                                                                            #这就是实际图片的url的一个list
+                cnt=1
+                if os.path.exists(k) != True:
+                    os.mkdir('{}\\{}'.format('sishen', k))                                                              #创建一个文件夹存储下载的图片数据.现在只支持死神。若要添加其他的，需要修改此处以及下方sishen以及class的url
+                for i in allpicurl:
+                    try:
+                        self.getImg('http://www.iimanhua.com/' + i, &quot;{}\\{}\\{}.jpg&quot;.format('sishen', k, cnt))      #实际下载。部分图片url是相对地址，需要加前缀
+                    except BaseException:
+                        try:
+                            self.getImg(i, &quot;{}\\{}\\{}.jpg&quot;.format('sishen', k, cnt))                                   #部分url是绝对地址，不需要加前缀
+                        except BaseException:
+                            print(&quot;something err, ignore&quot;)                                                              #图片会下载失败，可能是服务器缘故，先这样处理
+                            break
+                    cnt+=1
+
+
+
+
+
+comic=iimanhua(&quot;http://www.iimanhua.com/imanhua/sishen/&quot;)
+comic.introduce()
+comic.setepisode2dict()
+comic.requestepisode()
+#comic.getImg(&quot;http://cartoon.youzu88.com/manhuatuku/106/manhua_12_20160717_2016071711302992378.jpg&quot;, &quot;1.jpg&quot;)
+
+
+#browser.close()
+&lt;/pre&gt;
+</description>
+				
+				<pubDate>Wed, 28 Feb 2018 00:00:00 +0800</pubDate>
+				<link>http://localhost:4000/python%E7%88%AC%E8%99%AB</link>
+				<guid isPermaLink="true">http://localhost:4000/python%E7%88%AC%E8%99%AB</guid>
 			</item>
 			
 		

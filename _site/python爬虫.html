@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--
+    * Author:         BeiYuu
+    * Revised:        pkokp8
+    -->
+    <meta charset="utf-8" />
+    <title>python爬虫 | pkokp8's blog</title>
+    <meta name="author" content="pkokp8" />
+    <meta name="renderer" content="webkit">
+    <meta name="description" content="Everything about pkokp8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <link rel="stylesheet" href="/css/default.css" type="text/css" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="alternate" type="application/atom+xml" title="Recent Entries" href="/atom.xml" />
+    <link rel="alternatecss" type="application/rss+xml" title="“pkokp8's Blog”" href="http://localhost:4000/feed.xml">
+    <script src="/js/jquery-1.7.1.min.js" type="text/javascript"></script>
+</head>
+<body>
+
+    <div class="home-menu">
+        <div class="home-icon-con">
+            <a class="home-menu-icon" href="/">pkokp8</a>
+            <a class="home-follow" href="#" title="Contact Me">+</a>
+        </div>
+        <div class="home-contact">
+            <a href="https://github.com/pkokp8/" target="_blank" style="margin-left:-5px;"><img src="https://github.com/favicon.ico" alt="" width="22"/>我的github</a>
+			<!--
+				<a href="http://tieba.baidu.com/f?kw=firefox&fr=index&red_tag=x1116532383" target="_blank" style="text-align:center;"><img src="https://tb1.bdstatic.com/tb/favicon.ico" alt="" width="22"/></a>
+			-->
+            <!--
+			<a href="https://leetcode.com/pkokp8/" target="_blank" style="text-align:center;"><img src="https://leetcode.com/favicon-32x32.png" alt="" width="22"/></a>
+			-->
+            <!--
+			<a href="/feed.xml" target="_blank" style="text-align:right"><img src="http://static.firefoxchina.cn/img/201711/7_5a0ba48885d170.png" alt="" width="22"/></a>
+			-->
+        </div>
+		<div class="home-contact">
+			<a href="mailto:pkokp8@gmail.com" target="_blank" style="text-align:center;"><img src="/images/mail.jpg" alt="" width="22"/>联系作者</a>
+		</div>
+    </div>
+
+    <link rel="stylesheet" href="/js/prettify/prettify.css" />
+<style type="text/css">
+    body { background:#B9D3EE; }
+    @media screen and (max-width: 750px){
+        body { background:#fff; }
+    }
+    @media screen and (max-width: 1020px){
+        body { background:#fff; }
+    }
+</style>
+
+<div id="content">
+    <div class="entry">
+        <h1 class="entry-title"><a href="/python%E7%88%AC%E8%99%AB" title="python爬虫">python爬虫</a></h1>
+        <p class="entry-date">2018-02-28</p>
+        <h2 id="一个bing的爬虫">一个bing的爬虫</h2>
+<p>作用仅限于下载一张首页的背景图。拿来作作windows桌面效果还不错。</p>
+
+<pre>
+
+from urllib import request
+import re
+
+bingeverydayimgprefix  = 'https://www.bing.com/az/hprichbg/rb/'
+
+with request.urlopen('https://www.bing.com/') as f:
+    data = f.read()
+    #print('Status:', f.status, f.reason)
+    for k, v in f.getheaders():
+        pass
+    bingdata = data.decode('utf-8')
+
+def findimg(htmlstring):
+    return re.findall(r'\.jpg', htmlstring)
+
+print("===================")
+bracket = re.findall(r'\{.*?\}', bingdata)
+cnt = 0
+jpglist=[]
+for i in bracket:
+    if findimg(i):
+        cnt += 1
+        jpglist.append(i)
+
+print("here has %d jpg element(s)" % cnt)
+truejpegurl=[]
+jpegfilename=[]
+for i in jpglist:
+    result = [x for x in re.split("/|\'|\"", i) if x]
+    for j in result:
+        if findimg(j):
+            truejpegurl.append(bingeverydayimgprefix + j)
+            jpegfilename.append(j)
+print(truejpegurl)
+print(jpegfilename)
+
+print("===========================================================")
+import urllib.request
+
+def getImg(url,filename):
+    urllib.request.urlretrieve(url, filename)
+
+n=0
+for cururl in truejpegurl:
+    getImg(truejpegurl[n], jpegfilename[n])
+    n += 1
+
+</pre>
+
+<h2 id="一个http请求的发送">一个http请求的发送</h2>
+<p>bing到底和作者什么仇？</p>
+<pre>
+import socket
+
+# 创建socket:
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# 连接:
+
+s.connect(('www.bing.com', 80))
+
+request = 'GET / HTTP/1.1 \r\n\
+Host: cn.bing.com\r\n\
+User-Agent:Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50\r\n\
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n\
+Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\n\
+Connection: close\r\n\
+Upgrade-Insecure-Requests: 1\r\n\
+Pragma: no-cache\r\n\
+Cache-Control: no-cache\r\n\r\n'
+
+s.send(bytes(request, encoding = "utf8"))
+
+# 接收:
+buffer = []
+while True:
+    d = s.recv(1024)
+    if d:
+        buffer.append(d)
+    else:
+        break
+data = b''.join(buffer)
+
+s.close()
+
+header, html = data.split(b'\r\n\r\n', 1)
+print(header.decode())
+with open('bing.html', 'wb') as f:
+    f.write(html)
+</pre>
+
+<h2 id="爬爬漫画">爬爬漫画</h2>
+<p>实测效果不是很好。跑了一下午一部《死神》都没爬完。还需要继续培养面向对象的编程思想。而且总是用正则，代码不简洁；应该有第三方模块可以直接import后处理获取到的一些数据
+只实现了imanhua的一小部分，manhuatai还没有实现。</p>
+
+<pre>
+#coding=utf-8
+from urllib import request
+import re
+import base64
+import os
+from selenium import webdriver
+#browser = webdriver.PhantomJS()
+
+class manhuatai(object):      ####todo
+    def __init__(self, url):
+        self.url = url
+    def introduce(self):
+        with request.urlopen(self.url) as f:
+            data = f.read()
+            # print('Status:', f.status, f.reason)
+            for k, v in f.getheaders():
+                pass
+            self.urldata = data.decode('utf-8')                                                                 #manhuatai用了utf-8编码，因此decode参数为utf-8
+            self.urldatalist = []
+            bracket=re.findall(r'\&lt;.*?\&gt;', self.urldata)
+            for i in bracket:
+                self.urldatalist.append(i)
+                #print(i)
+    def setepisode2dict(self):
+        self.episodedict = {}
+        for i in self.urldatalist:
+            m = re.match(r'^.*?title\=\"(.*?)\"\s.*?\"(.*\.html)\".*$', i)
+            if m:
+                self.episodedict[m.group(1)]=m.group(2)
+                #print("{}==={}".format(m.group(1),m.group(2)))
+
+
+    def requestepisode(self):
+        print(self.url + '/' + self.episodedict['第01期'])
+        with request.urlopen(self.url + '/' + self.episodedict['第01期']) as f:
+            data = f.read()
+            # print('Status:', f.status, f.reason)
+            #for k, v in f.getheaders():
+            #    pass
+            episodedata = data.decode('utf-8')
+            print(episodedata)                                                                                  #找不到每一张图片的url请求，先搁置
+        browser.get(self.url + '/' + self.episodedict['第01期'])                                                #用webdriver的方法去请求，实际PhantomJS是一个无界面的浏览器内核
+        print("need open line 6")
+        data = browser.page_source                                                                              #页面源码
+        #print(data)
+
+    def getImg(self, url,filename):
+        request.urlretrieve(url, filename)
+
+class iimanhua(manhuatai):
+    def introduce(self):
+        with request.urlopen(self.url) as f:                                                                    #请求介绍页，获取漫画列表
+            data = f.read()
+            # print('Status:', f.status, f.reason)
+            for k, v in f.getheaders():
+                #print("{}={}".format(k, v))
+                pass
+            #print(data.decode('gb2312', errors='ignore'))                                                      #imanhua网站用了gb2312编码，因此decode参数为gb2312
+            self.urldata = data.decode('gb2312', errors='ignore')
+            self.urldatalist = []
+            bracket=re.findall(r'\&lt;.*?\&gt;', self.urldata)
+            for i in bracket:
+                self.urldatalist.append(i)
+                #print(i)
+    def getImg(self, url,filename):
+        request.urlretrieve(url, filename)
+    def setepisode2dict(self):                                                                                  #将每一话的相对路径和标题存入self.episodedict
+        self.episodedict = {}
+        for i in self.urldatalist:
+            m = re.match(r'^.*?\"(\/imanhua.*?\.html)\"\s+title=\"(.*?)\".*?target.*$', i)
+            if m:
+                self.episodedict[m.group(2)]=m.group(1)
+                #print("{}={}".format(m.group(1),m.group(2)))
+
+        for k, v in self.episodedict.items():
+            pass
+            #print("{}={}".format(k, v))    #第x话='xxx.html'
+    def requestepisode(self):                                                                                   #处理每一话
+        self.mainurl='http://www.iimanhua.com/'
+        for k, v in self.episodedict.items():
+            print("{}={}".format(k,v))
+            with request.urlopen(self.mainurl + '/' + v) as f:                                                          #打开每一话的第一页，每张图片是异步加载的。但是页面源码可以获取base64编码的图片url
+            #with request.urlopen('http://www.iimanhua.com/imanhua/9202/261288.html') as f:
+                data = f.read()
+                self.episode = data.decode('gb2312', errors='ignore')
+                m = re.findall(r'var\sqTcms_S_m_murl_e=\"(.*?)\";', self.episode)
+                #print(self.episode)
+                allpicurl = str(base64.urlsafe_b64decode(m[0]), encoding = "utf-8").split('$qingtiandy$')               #将var qTcms_S_m_murl_e='xxx'的内容进行base64解码，并通过$qingtiandy$分割
+                print(allpicurl)                                                                                            #这就是实际图片的url的一个list
+                cnt=1
+                if os.path.exists(k) != True:
+                    os.mkdir('{}\\{}'.format('sishen', k))                                                              #创建一个文件夹存储下载的图片数据.现在只支持死神。若要添加其他的，需要修改此处以及下方sishen以及class的url
+                for i in allpicurl:
+                    try:
+                        self.getImg('http://www.iimanhua.com/' + i, "{}\\{}\\{}.jpg".format('sishen', k, cnt))      #实际下载。部分图片url是相对地址，需要加前缀
+                    except BaseException:
+                        try:
+                            self.getImg(i, "{}\\{}\\{}.jpg".format('sishen', k, cnt))                                   #部分url是绝对地址，不需要加前缀
+                        except BaseException:
+                            print("something err, ignore")                                                              #图片会下载失败，可能是服务器缘故，先这样处理
+                            break
+                    cnt+=1
+
+
+
+
+
+comic=iimanhua("http://www.iimanhua.com/imanhua/sishen/")
+comic.introduce()
+comic.setepisode2dict()
+comic.requestepisode()
+#comic.getImg("http://cartoon.youzu88.com/manhuatuku/106/manhua_12_20160717_2016071711302992378.jpg", "1.jpg")
+
+
+#browser.close()
+</pre>
+
+        <div id="disqus_container">
+            <class="comment"/>
+<div id="disqus_thread"></div>
+<script>
+    /**
+     *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+     *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+     */
+    /*
+    var disqus_config = function () {
+        this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+    };
+    */
+	/*	//disqus is walled by the great fire wall XD
+    (function() {  // DON'T EDIT BELOW THIS LINE
+        var d = document, s = d.createElement('script');
+        
+        s.src = '//mukosame.disqus.com/embed.js';
+        
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+	*/
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+        
+        </div>
+   </div>
+   
+    <div class="sidenav">
+        <h2>Blog</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/uboot%E7%9A%84%E7%BD%91%E5%8D%A1%E9%A9%B1%E5%8A%A8">uboot的网卡驱动</a></li>
+        
+            <li><a href="/shell%E7%9A%84source%E5%92%8Cexport">source和export</a></li>
+        
+            <li><a href="/h264_h265%E7%A0%81%E6%B5%81%E5%88%86%E6%9E%90">h264 h265码流分析</a></li>
+        
+            <li><a href="/gdb%E7%9A%84%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8">gdb的简单使用</a></li>
+        
+            <li><a href="/%E4%B8%A4%E7%A7%8D%E5%8F%98%E9%95%BF%E7%BC%96%E7%A0%81">两种无损变长编码</a></li>
+        
+            <li><a href="/yuv%E7%9A%84%E5%90%84%E7%A7%8D%E6%A0%BC%E5%BC%8F">yuv的各种格式</a></li>
+        
+            <li><a href="/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86-%E9%A2%9C%E8%89%B2%E6%B8%90%E5%8F%98-c">颜色渐变</a></li>
+        
+            <li><a href="/libjpeg-decode-c">libjpeg解码篇</a></li>
+        
+            <li><a href="/git-simple-use">git的简单操作</a></li>
+        
+            <li><a href="/python%E7%88%AC%E8%99%AB">python爬虫</a></li>
+        
+            <li><a href="/python-copy-list">复制一个list</a></li>
+        
+        </ul>
+
+        <h2>Dump</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/linus%E5%8F%91%E8%A8%80">大喷子linus?</a></li>
+        
+        </ul>
+
+        <h2>Project</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/test1-test2-test3">pass</a></li>
+        
+        </ul>
+    </div>
+</div>
+
+<script src="/js/post.js" type="text/javascript"></script>
+
+
+
+<!--
+todo: some elements are covered by other.maybe it's because the follow of css or js?
+<div id="container"></div>
+<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<script>
+var gitment = new Gitment({
+  id: 'location.href', // 可选。默认为 location.href  比如我本人的就删除了
+  owner: 'pkokp8',              //比如我的叫anTtutu
+  repo: 'pkokp8.github.io',                 //比如我的叫anTtutu.github.io
+  oauth: {
+    client_id: '0adcc87f3cacd0dc791e',          //比如我的828***********
+    client_secret: '9a5bc6ea6b50a06ca18592308039acd982d72381',  //比如我的49e************************
+  },
+})
+gitment.render('container')
+</script>
+-->
+
+
+    <script type="text/javascript">
+        $(function(){
+            $('.home-follow').click(function(e){
+                e.preventDefault();
+
+                if($('.home-contact').is(':visible')){
+                    $('.home-contact').slideUp(100);
+                }else{
+                    $('.home-contact').slideDown(100);
+                }
+            });
+        })
+    </script>
+</body>
+</html>
