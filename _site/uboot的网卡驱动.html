@@ -56,7 +56,12 @@
     <div class="entry">
         <h1 class="entry-title"><a href="/uboot%E7%9A%84%E7%BD%91%E5%8D%A1%E9%A9%B1%E5%8A%A8" title="uboot的网卡驱动">uboot的网卡驱动</a></h1>
         <p class="entry-date">2018-03-17</p>
-        <h2 id="uboot网卡驱动">uboot网卡驱动</h2>
+        <p>本人由于工作原因，接触过多款uboot。这里以香橙派开发板的uboot代码为例。<br />
+当然也可以直接取uboot的主页上下载一份最新的boot：http://www.denx.de/wiki/U-Boot/WebHome<br />
+关于香橙派的源码请去官网下载：http://www.orangepi.cn/downloadresourcescn/<br />
+或其git：https://github.com/orangepi-xunlong</p>
+
+<h2 id="uboot网卡驱动">uboot网卡驱动</h2>
 
 <p>uboot的启动流程是这样的：<br />
 cpu的片上rom会执行一段内部的代码，这段代码不可见、不可修改，一般是cpu厂家制作的。代码的功能是用来引导uboot。uboot的入口是start.S <br />
@@ -64,7 +69,8 @@ start.S中都是一些汇编，cpu厂家会根据自己的uboot调整里面的�
 board.c的入口不确定。不同厂家会改接口名。例如sunxi的入口就是board_init_r，而海思则是start_armboot。要找到这个入口也很简单，因为一般没人改main.c–main_loop，谁调用了main_loop谁就是入口。<br />
 不过这次不是讲uboot的启动流程，主要讲网卡驱动的驱动流程。</p>
 <ul>
-  <li>sunxi平台</li>
+  <li>sunxi平台
+在board_init_r入口处，有对网卡的初始化。以下就是一些简单的流程。</li>
 </ul>
 <pre>
 board_init_r
@@ -82,36 +88,15 @@ board_init_r
 </pre>
 
 <ul>
-  <li>海思平台</li>
+  <li>海思平台
+基本一样，稍有不同。因为都是基于官方boot修改的.手上只有一些笔记资料，就不放上来了。</li>
 </ul>
-<pre>
-start_armboot
-	eth_initialize
-		miiphy_init//把mii_devs放入链表
-			stmmac_init//在do_ping中也有做这一步
-				getenv("mdio_intf")
-				getenv("phyaddr0"),sprintf(GMAC0_PHY_NAME, "mdio0");
-				getenv("phyaddr1"),sprintf(GMAC1_PHY_NAME, "mdio1");
-				stmmac_mdiobus_driver_init
-					1.设置内存基地址（海思TOE）
-					2.stmmac_mdio_clk_init
-					3.miiphy_register
-						list_for_each遍历链表找mii_devs
-						比较链表节点（list_entry）的name和GMAC0_PHY_NAME是否相等，相等说明已注册，否则就未注册
-						申请内存（设备）
-						注册read和write函数//stmmac_mdiobus_read，stmmac_mdiobus_write
-						把新申请的设备放入链表末尾（list_add_tail）
-					4.设置当前mii设备
-				stmmac_dev_probe_init
-					stmmac_sys_init//写海思寄存器初始化
-					stmmac_init_hw_desc_queue//写海思寄存器初始化
-</pre>
 
-<p>至此，网卡的初始化流程就结束了。如果配置都ok，那么只要再实现一个ping命令或tftp命令，就可以和外界通信了。</p>
+<p>至此，网卡的初始化流程就结束了。如果配置都ok，那么只要再实现一个ping命令或tftp命令，就可以通过网卡和外界通信了。</p>
 
 <h2 id="ping的流程">ping的流程</h2>
-<p>uboot的ping命令非常简单。入口是do_ping。
-用法和windows下或linux下是一样的。
+<p>uboot的ping命令非常简单。入口是do_ping。依然以香橙派的uboot为例。<br />
+用法和windows下或linux下是一样的。<br />
 do_ping首先把argv[1]赋值给NetPingIP，然后调用NetLoop(PING) 来初始化ping命令。</p>
 
 <h1 id="netloop">NetLoop</h1>
@@ -229,14 +214,15 @@ arp的作用是获取对端的物理地址(mac)<br />
 如果要实现一些tcp下的操作，只要了解tcp的消息构造，完全可以实现一个tcp的发送。（说的简单XD）<br />
 实现tcp发送后，可以在tcp的基础上实现http服务。<br />
 实现http服务后，就可以根据get、post等消息，实现一个不通过串口却能在boot下升级整个镜像的功能了。<br />
-不过要做这些，工作量巨大。</p>
+不过要做这些，工作量巨大。那些在路由器上制作出了一个不死uboot的高手实在是厉害。</p>
 
 <p>=========<br />
-即使不懂这些东西，有一个简单的框架，uip。了解一下<br />
-游泳健身，了解一下</p>
+不过即使不懂这些东西，也有一个简单的框架，移植一下貌似就可以实现uboot下的http服务了。
+uip，了解一下:)<br />
+游泳健身，了解一下XD</p>
 
 <p>=========<br />
-补充一下eth帧格式。markdown空格编辑太不优雅了。。。换张图片吧。
+补充一下eth帧格式。markdown空格编辑太不优雅了。。。换张图片吧。<br />
 <img src="/images/netdriver/netdriver.png" alt="avatar" />
 Ethernet II和IEEE802.3的帧格式比较类似，主要的不同点在于前者定义的2字节的类型，而后者定义的是2字节的长度；所幸的是，后者定义的有效长度值与前者定义的有效类型值无一相同，这样就容易区分两种帧格式了。</p>
 

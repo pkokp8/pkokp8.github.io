@@ -141,13 +141,13 @@ enum NALUnitType {
 </pre>
 
 <p>举例：
-       00 00 00 01 40  NALUnitType为 32  视频参数集         VPS
-       00 00 00 01 42  NALUnitType为 33  序列参数集         SPS
-       00 00 00 01 44  NALUnitType为 34  图像参数集         PPS
+       00 00 00 01 40  NALUnitType为 32  视频参数集         VPS<br />
+       00 00 00 01 42  NALUnitType为 33  序列参数集         SPS<br />
+       00 00 00 01 44  NALUnitType为 34  图像参数集         PPS<br />
        00 00 00 01 4E  NALUnitType为 39  补充增强信息       SEI</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   00 00 00 01 26  NALUnitType为 19  IDR SLICE          I帧
-   00 00 00 01 02  NALUnitType为  1  非IDR SLICE        P帧
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   00 00 00 01 26  NALUnitType为 19  IDR SLICE          I帧  
+   00 00 00 01 02  NALUnitType为  1  非IDR SLICE        P帧  
 </code></pre></div></div>
 
 <p>同264，I帧前会有VPS/SPS/PPS</p>
