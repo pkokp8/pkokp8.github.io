@@ -4,7 +4,9 @@ title: libjpeg解码篇
 description: 详解需要讲实际解码部分，还没这么深入。因此这算是初解
 category: blog
 ---
+libjpeg是一个处理jpeg图像的开源库。实现了jpeg图片的编解码。源代码是用C语言写的。原始版本一直由IJG组织维护发布。
 
+本次先讲讲jpeg的解码。
 既然是jpeg解码，那就先放一张图。图是从bing首页上爬下来的。
 
 ![avatar](/images/libjpegmaterial/CactiIslaPescado_ZH-CN11317505000_1920x1080_orig.jpg)
