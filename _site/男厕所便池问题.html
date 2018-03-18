@@ -6,7 +6,7 @@
     * Revised:        pkokp8
     -->
     <meta charset="utf-8" />
-    <title>git的简单操作 | pkokp8's blog</title>
+    <title>男厕所便池问题 | pkokp8's blog</title>
     <meta name="author" content="pkokp8" />
     <meta name="renderer" content="webkit">
     <meta name="description" content="Everything about pkokp8" />
@@ -54,70 +54,80 @@
 
 <div id="content">
     <div class="entry">
-        <h1 class="entry-title"><a href="/git-simple-use" title="git的简单操作">git的简单操作</a></h1>
-        <p class="entry-date">2018-03-01</p>
-        <p>
-  记录一下git的使用。系统是ubuntu16.04. 安装好git环境  
-  首先在github上右上角点一下+，然后New repository。  
-  也可以本地创建好后push上去，不过这样也挺方便的。初学者嘛
-</p>
+        <h1 class="entry-title"><a href="/%E7%94%B7%E5%8E%95%E6%89%80%E4%BE%BF%E6%B1%A0%E9%97%AE%E9%A2%98" title="男厕所便池问题">男厕所便池问题</a></h1>
+        <p class="entry-date">2018-03-18</p>
+        <p>某天在逛知乎。首页刷出了一道男厕所问题。由于网络问题有时候app回答刷不出来，退出重进后题目不见了。这题困扰了我一个晚上。<br />
+题目是这样的：某处需要造一个男厕所。男厕所的便池样式是一排没有间隔，中间没有遮挡。<br />
+有这么几个前提：</p>
+<ul>
+  <li>男人上厕所首先选择离门最近的</li>
+  <li>如果厕所中有人，为了没有来自左右的视线压力，则选择离人最远的位置</li>
+  <li>如果选择了离人最远的位置后会与人相邻，那么男人就会等一个空位</li>
+</ul>
 
-<p>
-  然后是clone一个master，例如刚才创建的pkokp8.github.io.git分支
-</p>
-<pre>
-# git clone https://github.com/pkokp8/pkokp8.github.io.git
-</pre>
+<p>举例：<br />
+1.只有1个男人时，不用说，1个便池<br />
+2.有2个男人时，3个。<br />
+3.有3个男人时，5个。<br />
+4.有4个男人时，并不是7个，而是8个。<br />
+如图男人是这么选择便池的：</p>
 
-<p>接着就可以修改、提交文件</p>
-<pre>
-# echo "# test info" &gt;&gt; README.md           #新建README.md
-# git add .                                 #本地仓库新增这个文件
-# git commit -m "commit the readme"         #提交到本地，日志为-m后面""内的字符串。万一commit错误，可以不进行下一步，直接使用reset来回退代码，这样远端就不会有这次commit的记录
-# git push -u origin master                 #push到远程主线。
-</pre>
+<p><img src="/images/便池/n=4_x=7.png" alt="avatar" />
+只有7个便池时，第4人就需要等待了。<br />
+<img src="/images/便池/n=4_x=8.png" alt="avatar" /></p>
 
-<p>
-  此时可能因为没有用户名和密码，会提示错误。可以配置后再执行上述命令
-</p>
+<p>假设有n个男人要同时上厕所，那么最少需要几个便池？</p>
 
-<pre>
-# git config --global user.name "pkokp8"
-# git config --global user.email "xxx@xx.com"
-</pre>
+<p>思来想去，觉得要么暴力算法：
+最少的便池数量是每个男人间隔1个便池，也就是2n-1个。当数量达到每个男人间隔2个便池时，再增加1个就必定能容纳n+1个男人同时上厕所。<br />
+只要写一个函数从2n-1开始验证，直到3n-2时就能得出需要几个便池。但这个肯定不是最优算法！</p>
 
-<p>
-  查看本地的提交记录，简单的可以使用。配合reset可以回退版本。注意-hard会把本地修改覆盖掉。  
-  类似svn的svn revert ./ -R;svn up -r xxx
-</p>
-<pre>
-# git log
-commit af17a9f424c5da5b4b06f90e69eb069f89124e40
-Author: pkokp8 &lt;xxx@xx.com&gt;
-Date:   Thu Mar 1 00:23:55 2018 +0800
+<p>搜索了半天的百度，加了“知乎”的关键词也依然搜索不到。只能自己想解法。<br />
+第一个想到的是递归方法。</p>
 
-    modify readme
+<h2 id="递归方法1">递归方法1</h2>
+<p>n个男人等于3n-2时，增加1个便池就能容纳n+1个男人。
+于是得出n个男人需要的便池数量是(3m-2)+1，其中m=n-1
+于是可以算出是3n-4.
+先不考虑n=1之类的临界条件，代入一个较大的数：
+暴力穷举验证：<br />
+4个男人需要8个便池。3<em>4-4=8，完美<br />
+5个男人需要9个便池。3</em>5-4=11，不完美了<br />
+这是因为不需要n-1个男人满足(3m-2)。</p>
 
-# git reset -hard af17a9f424c5da5b4b06f90e69eb069f89124e40 
-</pre>
+<h2 id="递归方法2">递归方法2</h2>
+<p>n个男人需要X个便池。</p>
+<ul>
+  <li>当n是奇数时，(n+1)/2个男人在X的前一半，(n+1)/2个男人在X的后一半。<br />
+只要得到前一半的数量，加上后一半的数量。此外由于中间的那个人算了两次，再减去1。那么结果就是n个男人需要的数量。<br />
+验证一下，假设算法为f<br />
+f(3)=f(2)+f(2)-1=3+3-1=5———成立<br />
+f(5)=f(3)+f(3)-1=5+5-1=9———成立</li>
+</ul>
 
-<p>
-  接着就可以创建分支了：
-</p>
-<pre>
-# git branch firstversion                   #创建名为firstversion的分支
-# git checkout firstversion                 #切换到这个分支
-# git push -u origin firstversion           #把这个分支push到远端
-# git checkout master                       #切换回主线
-# git branch                                #查看当前处于哪条分支（看*），以及存在哪些分支
-  firstversion
-* master
-# git diff                                  #查看本地与本地仓库之间的差异
-</pre>
+<p>验证7个男人对14个便池<br />
+<img src="/images/便池/n=7_x=14.png" alt="avatar" />
+第7人没有位置<br />
+验证7个男人对15个便池<br />
+<img src="/images/便池/n=7_x=15.png" alt="avatar" />
+f(7)=f(4)+f(4)-1=8+8-1=15——–成立<br />
+因此f(n)=2*f((n+1)/2)-1</p>
 
-<p>
-  暂时就用到这么多。我感觉我还是要学习一个
-</p>
+<ul>
+  <li>
+    <p>但是这个算法暂时还不满足n为偶数的情况。<br />
+当n为偶数，例如4。f(4)不能写作f(3)+f(2)-1=7 <br />
+因为这个方法是递归算前半段和后半段，前提是第3个人在中间位置。f(3)=5，f(2)=3，两者差值大于1。这样的分法不满足第3人在正中间。<br />
+为了保证左右两边的差值不大于1，取较大的半段即可。然后不但要减去重复计算的中间人，也要减去小半段取较大的半段的差值。即结果是f(n)=2*f(n/2+1)-2</p>
+  </li>
+  <li>
+    <p>最终结果:<br />
+f(1)=1<br />
+f(2)=3<br />
+f(n)=2<em>f((n+1)/2)-1      n为奇数<br />
+f(n)=2</em>f(n/2+1)-2        n为偶数</p>
+  </li>
+</ul>
 
         <div id="disqus_container">
             <class="comment"/>
