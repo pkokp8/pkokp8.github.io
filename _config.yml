@@ -11,7 +11,7 @@ permalink: /:title
 
 name: “pkokp8's Blog”
 title: pkokp8's blog
-description: 在这个世界多搬点砖，如果能造一块那就太好了
+description: 多搬点砖
 url: https://pkokp8.github.io/
 feed: /atom.xml
 author_info: <a href="https://pkokp8.github.io/">pkokp8</a>

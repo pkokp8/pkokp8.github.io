@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 	<channel>
 		<title>“pkokp8's Blog” - Articles</title>
-		<description>在这个世界多搬点砖，如果能造一块那就太好了</description>
+		<description>多搬点砖</description>
 		<link>http://localhost:4000</link>
 		<atom:link href="http://localhost:4000/feed.articles.xml" rel="self" type="application/rss+xml" />
 		
@@ -938,7 +938,226 @@ ABABDAABCD的编码就是&lt;br /&gt;
 			<item>
 				<title>yuv的各种格式</title>
 				
-					<description>&lt;h2 id=&quot;pass&quot;&gt;pass&lt;/h2&gt;
+					<description>&lt;p&gt;yuv的格式非常非常多，也有很多很多种叫法。此处进行一下梳理&lt;/p&gt;
+
+&lt;p&gt;yuv和ayuv这个暂且不谈，大小端存储也不谈。&lt;/p&gt;
+
+&lt;p&gt;=========================================&lt;/p&gt;
+&lt;h2 id=&quot;采样方式上&quot;&gt;采样方式上&lt;/h2&gt;
+&lt;p&gt;大致分为yuv444，yuv422，yuv420，yuv411&lt;/p&gt;
+
+&lt;p&gt;以下以3平面举例：&lt;/p&gt;
+&lt;h1 id=&quot;yuv444&quot;&gt;yuv444&lt;/h1&gt;
+&lt;p&gt;1个y对应1个u对应1个v，故名yuv444&lt;br /&gt;
+举例：&lt;br /&gt;
+y0 y1 y2 y3&lt;br /&gt;
+u0 u1 u2 u3&lt;br /&gt;
+v0 v1 v2 v3&lt;/p&gt;
+
+&lt;p&gt;y分量的数量 = 宽x高&lt;br /&gt;
+u分量的数量 = 宽x高&lt;br /&gt;
+v分量的数量 = 宽x高&lt;br /&gt;
+总数量 = 宽 x 高 x 3&lt;/p&gt;
+
+&lt;h1 id=&quot;yuv422&quot;&gt;yuv422&lt;/h1&gt;
+&lt;p&gt;4个y对应2个u对应2个v.故名yuv422&lt;br /&gt;
+举例：&lt;br /&gt;
+y0 y1 y2 y3&lt;br /&gt;
+u0 u1&lt;br /&gt;
+v0 v1&lt;/p&gt;
+
+&lt;p&gt;y分量的数量 = 宽 x 高&lt;br /&gt;
+u分量的数量 = 宽 x 高 / 2&lt;br /&gt;
+v分量的数量 = 宽 x 高 / 2&lt;br /&gt;
+总数量 = 宽 x 高 x 2&lt;/p&gt;
+
+&lt;h1 id=&quot;yuv420和yuv411&quot;&gt;yuv420和yuv411&lt;/h1&gt;
+&lt;p&gt;虽然名为yuv420，但其实是4个y对应1个u对应1个v。v的数量并不是0。采样方式是一行420，一行402&lt;br /&gt;
+而411的名字如字面意思，4:1:1的采样&lt;br /&gt;
+举例：&lt;br /&gt;
+y0 y1 y2 y3&lt;br /&gt;
+u0&lt;br /&gt;
+v0&lt;/p&gt;
+
+&lt;p&gt;y分量的数量 = 宽 x 高&lt;br /&gt;
+u分量的数量 = 宽 x 高 / 4&lt;br /&gt;
+v分量的数量 = 宽 x 高 / 4&lt;br /&gt;
+总数量 = 宽 x 高 x 3 / 2&lt;/p&gt;
+
+&lt;p&gt;两者采样比例一样，但采样方式不同。&lt;br /&gt;
+yuv420:水平方向，y每个像素点都采样，uv隔2个像素点采样.垂直方向上，y每个像素点都采样，uv隔2个像素点采样.&lt;br /&gt;
+        相当于隔行隔列采样一次uv&lt;/p&gt;
+
+&lt;p&gt;yuv411:水平方向，y每个像素点都采样，uv隔4个像素点采样&lt;/p&gt;
+
+&lt;p&gt;=========================================&lt;/p&gt;
+
+&lt;h2 id=&quot;存放方式&quot;&gt;存放方式&lt;/h2&gt;
+&lt;p&gt;有planar semiplanar interleaved三种&lt;/p&gt;
+&lt;h1 id=&quot;planar三平面&quot;&gt;planar，三平面&lt;/h1&gt;
+
+&lt;p&gt;yuv444图示：&lt;br /&gt;
+y0 y1 y2 y3&lt;br /&gt;
+u0 u1 u2 u3&lt;br /&gt;
+v0 v1 v2 v3&lt;/p&gt;
+
+&lt;h1 id=&quot;semiplanar两平面&quot;&gt;semiplanar，两平面&lt;/h1&gt;
+&lt;p&gt;y0 y1 y2 y3&lt;br /&gt;
+u0v0 u1v1 u2v2 u3v3&lt;/p&gt;
+
+&lt;h1 id=&quot;interleaved一平面&quot;&gt;interleaved，一平面&lt;/h1&gt;
+&lt;p&gt;y0u0v0 y1u1v1 y2u2v2 y3u3v3&lt;/p&gt;
+
+&lt;p&gt;NOTE:&lt;br /&gt;
+p即planar&lt;br /&gt;
+sp即semiplanar&lt;/p&gt;
+
+&lt;p&gt;I420: YYYYYYYY UU VV    =&amp;gt;YUV420P&lt;br /&gt;
+YV12: YYYYYYYY VV UU    =&amp;gt;YUV420P&lt;br /&gt;
+NV12: YYYYYYYY UVUV     =&amp;gt;YUV420SP&lt;br /&gt;
+NV21: YYYYYYYY VUVU     =&amp;gt;YUV420SP&lt;/p&gt;
+
+&lt;p&gt;=========================================&lt;/p&gt;
+&lt;h2 id=&quot;yuv的存放顺序&quot;&gt;yuv的存放顺序&lt;/h2&gt;
+&lt;p&gt;又分为u在前还是v在前&lt;/p&gt;
+
+&lt;h1 id=&quot;两平面&quot;&gt;两平面&lt;/h1&gt;
+&lt;p&gt;以下记忆方式：yv12，v在前；yu12，u在前&lt;br /&gt;
+例如yv12（v在前）:&lt;br /&gt;
+yyyy&lt;br /&gt;
+vv&lt;br /&gt;
+uu&lt;/p&gt;
+
+&lt;p&gt;例如yu12，也叫i420（u在前）:&lt;br /&gt;
+yyyy&lt;br /&gt;
+uu&lt;br /&gt;
+vv&lt;/p&gt;
+
+&lt;h1 id=&quot;三平面&quot;&gt;三平面&lt;/h1&gt;
+&lt;p&gt;以下记忆方式：yuv，012.  y是0，u是1，v是2.  nv12的1在前，即u在前。nv21的2在前，即v在前&lt;br /&gt;
+例如nv12（u在前）:&lt;br /&gt;
+yyyy&lt;br /&gt;
+uvuv&lt;/p&gt;
+
+&lt;p&gt;例如nv21（v在前）：&lt;br /&gt;
+yyyy&lt;br /&gt;
+vuvu&lt;br /&gt;
+——–&lt;/p&gt;
+
+&lt;p&gt;也有y也参与顺序的交替:&lt;/p&gt;
+&lt;h1 id=&quot;一平面&quot;&gt;一平面&lt;/h1&gt;
+&lt;p&gt;例如：&lt;br /&gt;
+422: uyvy  vyuy  yuyv yvyu&lt;/p&gt;
+
+&lt;p&gt;411:&lt;br /&gt;
+uyyvyy411======u y y v y y&lt;br /&gt;
+=========================================&lt;/p&gt;
+&lt;h2 id=&quot;ffmpeg的格式头文件&quot;&gt;ffmpeg的格式头文件&lt;/h2&gt;
+
+&lt;p&gt;头文件中非常详细的列举了各种格式，虽然其中一些格式很少遇到。&lt;/p&gt;
+&lt;h1 id=&quot;比较常见的&quot;&gt;比较常见的&lt;/h1&gt;
+&lt;pre&gt;
+yuv420p:    AV_PIX_FMT_YUV420P
+yuv422p:    AV_PIX_FMT_YUV422P
+yuv444p:    AV_PIX_FMT_YUV444P
+yuv410p:    AV_PIX_FMT_YUV410P
+yuv411p:    AV_PIX_FMT_YUV411P
+yuv440p:    AV_PIX_FMT_YUV440P
+
+uyvy422:    AV_PIX_FMT_UYVY422
+yuyv422:    AV_PIX_FMT_YUYV422
+yvyu422:    AV_PIX_FMT_YVYU422
+uyyvyy411:    AV_PIX_FMT_UYYVYY411
+
+nv21:        AV_PIX_FMT_NV21                即yuv420sp=====yyyy vuvu
+nv12:        AV_PIX_FMT_NV12                即yuv420sp=====yyyy uvuv
+
+nv16:        AV_PIX_FMT_NV16                即yuv422sp=====yyyy uvuvuvuv
+
+
+yuvj420p:    AV_PIX_FMT_YUVJ420P
+yuvj422p:    AV_PIX_FMT_YUVJ422P
+yuvj444p:    AV_PIX_FMT_YUVJ444P
+yuvj440p:    AV_PIX_FMT_YUVJ440P
+yuvj411p:    AV_PIX_FMT_YUVJ411P
+&lt;/pre&gt;
+
+&lt;h1 id=&quot;不常见的&quot;&gt;不常见的&lt;/h1&gt;
+&lt;p&gt;带alpha:&lt;/p&gt;
+&lt;pre&gt;
+yuva420p:    AV_PIX_FMT_YUVA420P  
+y400a:        AV_PIX_FMT_Y400A        8位灰度，8位alpha.同 AV_PIX_FMT_YA8  
+yuva422p:    AV_PIX_FMT_YUVA422P  
+yuva444p:    AV_PIX_FMT_YUVA444P  
+&lt;/pre&gt;
+
+&lt;p&gt;大小端:&lt;/p&gt;
+&lt;pre&gt;
+    AV_PIX_FMT_YUV420P16LE,  ///&amp;lt; planar YUV 4:2:0, 24bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y samples), little-endian
+    AV_PIX_FMT_YUV420P16BE,  ///&amp;lt; planar YUV 4:2:0, 24bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y samples), big-endian
+    AV_PIX_FMT_YUV422P16LE,  ///&amp;lt; planar YUV 4:2:2, 32bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y samples), little-endian
+    AV_PIX_FMT_YUV422P16BE,  ///&amp;lt; planar YUV 4:2:2, 32bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y samples), big-endian
+    AV_PIX_FMT_YUV444P16LE,  ///&amp;lt; planar YUV 4:4:4, 48bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y samples), little-endian
+    AV_PIX_FMT_YUV444P16BE,  ///&amp;lt; planar YUV 4:4:4, 48bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y samples), big-endian
+
+    AV_PIX_FMT_YUV420P9BE, ///&amp;lt; planar YUV 4:2:0, 13.5bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y samples), big-endian
+    AV_PIX_FMT_YUV420P9LE, ///&amp;lt; planar YUV 4:2:0, 13.5bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y samples), little-endian
+    AV_PIX_FMT_YUV420P10BE,///&amp;lt; planar YUV 4:2:0, 15bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y samples), big-endian
+    AV_PIX_FMT_YUV420P10LE,///&amp;lt; planar YUV 4:2:0, 15bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y samples), little-endian
+    AV_PIX_FMT_YUV422P10BE,///&amp;lt; planar YUV 4:2:2, 20bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y samples), big-endian
+    AV_PIX_FMT_YUV422P10LE,///&amp;lt; planar YUV 4:2:2, 20bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y samples), little-endian
+    AV_PIX_FMT_YUV444P9BE, ///&amp;lt; planar YUV 4:4:4, 27bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y samples), big-endian
+    AV_PIX_FMT_YUV444P9LE, ///&amp;lt; planar YUV 4:4:4, 27bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y samples), little-endian
+    AV_PIX_FMT_YUV444P10BE,///&amp;lt; planar YUV 4:4:4, 30bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y samples), big-endian
+    AV_PIX_FMT_YUV444P10LE,///&amp;lt; planar YUV 4:4:4, 30bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y samples), little-endian
+    AV_PIX_FMT_YUV422P9BE, ///&amp;lt; planar YUV 4:2:2, 18bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y samples), big-endian
+    AV_PIX_FMT_YUV422P9LE, ///&amp;lt; planar YUV 4:2:2, 18bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y samples), little-endian
+
+    AV_PIX_FMT_YUVA420P9BE,  ///&amp;lt; planar YUV 4:2:0 22.5bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y &amp;amp; A samples), big-endian
+    AV_PIX_FMT_YUVA420P9LE,  ///&amp;lt; planar YUV 4:2:0 22.5bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y &amp;amp; A samples), little-endian
+    AV_PIX_FMT_YUVA422P9BE,  ///&amp;lt; planar YUV 4:2:2 27bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y &amp;amp; A samples), big-endian
+    AV_PIX_FMT_YUVA422P9LE,  ///&amp;lt; planar YUV 4:2:2 27bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y &amp;amp; A samples), little-endian
+    AV_PIX_FMT_YUVA444P9BE,  ///&amp;lt; planar YUV 4:4:4 36bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y &amp;amp; A samples), big-endian
+    AV_PIX_FMT_YUVA444P9LE,  ///&amp;lt; planar YUV 4:4:4 36bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y &amp;amp; A samples), little-endian
+    AV_PIX_FMT_YUVA420P10BE, ///&amp;lt; planar YUV 4:2:0 25bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y &amp;amp; A samples, big-endian)
+    AV_PIX_FMT_YUVA420P10LE, ///&amp;lt; planar YUV 4:2:0 25bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y &amp;amp; A samples, little-endian)
+    AV_PIX_FMT_YUVA422P10BE, ///&amp;lt; planar YUV 4:2:2 30bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y &amp;amp; A samples, big-endian)
+    AV_PIX_FMT_YUVA422P10LE, ///&amp;lt; planar YUV 4:2:2 30bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y &amp;amp; A samples, little-endian)
+    AV_PIX_FMT_YUVA444P10BE, ///&amp;lt; planar YUV 4:4:4 40bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y &amp;amp; A samples, big-endian)
+    AV_PIX_FMT_YUVA444P10LE, ///&amp;lt; planar YUV 4:4:4 40bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y &amp;amp; A samples, little-endian)
+    AV_PIX_FMT_YUVA420P16BE, ///&amp;lt; planar YUV 4:2:0 40bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y &amp;amp; A samples, big-endian)
+    AV_PIX_FMT_YUVA420P16LE, ///&amp;lt; planar YUV 4:2:0 40bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y &amp;amp; A samples, little-endian)
+    AV_PIX_FMT_YUVA422P16BE, ///&amp;lt; planar YUV 4:2:2 48bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y &amp;amp; A samples, big-endian)
+    AV_PIX_FMT_YUVA422P16LE, ///&amp;lt; planar YUV 4:2:2 48bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y &amp;amp; A samples, little-endian)
+    AV_PIX_FMT_YUVA444P16BE, ///&amp;lt; planar YUV 4:4:4 64bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y &amp;amp; A samples, big-endian)
+    AV_PIX_FMT_YUVA444P16LE, ///&amp;lt; planar YUV 4:4:4 64bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y &amp;amp; A samples, little-endian)
+
+    AV_PIX_FMT_NV20LE,       ///&amp;lt; interleaved chroma YUV 4:2:2, 20bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y samples), little-endian
+    AV_PIX_FMT_NV20BE,       ///&amp;lt; interleaved chroma YUV 4:2:2, 20bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y samples), big-endian
+
+    AV_PIX_FMT_YA16BE,       ///&amp;lt; 16 bits gray, 16 bits alpha (big-endian)
+    AV_PIX_FMT_YA16LE,       ///&amp;lt; 16 bits gray, 16 bits alpha (little-endian)
+
+    AV_PIX_FMT_YUV420P12BE, ///&amp;lt; planar YUV 4:2:0,18bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y samples), big-endian
+    AV_PIX_FMT_YUV420P12LE, ///&amp;lt; planar YUV 4:2:0,18bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y samples), little-endian
+    AV_PIX_FMT_YUV420P14BE, ///&amp;lt; planar YUV 4:2:0,21bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y samples), big-endian
+    AV_PIX_FMT_YUV420P14LE, ///&amp;lt; planar YUV 4:2:0,21bpp, (1 Cr &amp;amp; Cb sample per 2x2 Y samples), little-endian
+    AV_PIX_FMT_YUV422P12BE, ///&amp;lt; planar YUV 4:2:2,24bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y samples), big-endian
+    AV_PIX_FMT_YUV422P12LE, ///&amp;lt; planar YUV 4:2:2,24bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y samples), little-endian
+    AV_PIX_FMT_YUV422P14BE, ///&amp;lt; planar YUV 4:2:2,28bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y samples), big-endian
+    AV_PIX_FMT_YUV422P14LE, ///&amp;lt; planar YUV 4:2:2,28bpp, (1 Cr &amp;amp; Cb sample per 2x1 Y samples), little-endian
+    AV_PIX_FMT_YUV444P12BE, ///&amp;lt; planar YUV 4:4:4,36bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y samples), big-endian
+    AV_PIX_FMT_YUV444P12LE, ///&amp;lt; planar YUV 4:4:4,36bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y samples), little-endian
+    AV_PIX_FMT_YUV444P14BE, ///&amp;lt; planar YUV 4:4:4,42bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y samples), big-endian
+    AV_PIX_FMT_YUV444P14LE, ///&amp;lt; planar YUV 4:4:4,42bpp, (1 Cr &amp;amp; Cb sample per 1x1 Y samples), little-endian
+
+    AV_PIX_FMT_YUV440P10LE, ///&amp;lt; planar YUV 4:4:0,20bpp, (1 Cr &amp;amp; Cb sample per 1x2 Y samples), little-endian
+    AV_PIX_FMT_YUV440P10BE, ///&amp;lt; planar YUV 4:4:0,20bpp, (1 Cr &amp;amp; Cb sample per 1x2 Y samples), big-endian
+    AV_PIX_FMT_YUV440P12LE, ///&amp;lt; planar YUV 4:4:0,24bpp, (1 Cr &amp;amp; Cb sample per 1x2 Y samples), little-endian
+    AV_PIX_FMT_YUV440P12BE, ///&amp;lt; planar YUV 4:4:0,24bpp, (1 Cr &amp;amp; Cb sample per 1x2 Y samples), big-endian
+    AV_PIX_FMT_AYUV64LE,    ///&amp;lt; packed AYUV 4:4:4,64bpp (1 Cr &amp;amp; Cb sample per 1x1 Y &amp;amp; A samples), little-endian
+    AV_PIX_FMT_AYUV64BE,    ///&amp;lt; packed AYUV 4:4:4,64bpp (1 Cr &amp;amp; Cb sample per 1x1 Y &amp;amp; A samples), big-endian
+&lt;/pre&gt;
 </description>
 				
 				<pubDate>Tue, 13 Mar 2018 00:00:00 +0800</pubDate>
