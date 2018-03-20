@@ -814,39 +814,94 @@ ARM64 people more.&lt;/p&gt;
 &lt;p&gt;可以看出，这是一种无损编解码方式。编解码过程中没有精度的丢失。&lt;/p&gt;
 
 &lt;h1 id=&quot;ffmpeg的哥伦布解码操作&quot;&gt;ffmpeg的哥伦布解码操作&lt;/h1&gt;
-&lt;p&gt;先贴代码&lt;br /&gt;
-todo：注释&lt;/p&gt;
+&lt;p&gt;先贴代码，部分宏手动进行了展开&lt;/p&gt;
 &lt;pre&gt;
 /* libavcodec/golomb.h */
 static inline int get_ue_golomb(GetBitContext *gb)
 {
     unsigned int buf;
+	
+	//OPEN_READER(re, gb);
+    unsigned int re_index = (gb)-&amp;gt;index;
+    unsigned int av_unused re_cache;
 
-    OPEN_READER(re, gb);
-    UPDATE_CACHE(re, gb);
-    buf = GET_CACHE(re, gb);
+	//此时 re_index 是buff当前的下标,  (gb)-&amp;gt;buffer 始终是码流的起始地址
+	
+    //UPDATE_CACHE(re, gb);
+	re_cache = ((gb)-&amp;gt;buffer + (re_index &amp;gt;&amp;gt; 3)) &amp;gt;&amp;gt; (re_index &amp;amp; 7);
+	/*
+	&amp;gt;&amp;gt; 3 相当于除以8，这里相当于获取当前码流buff偏移的地址
+	&amp;amp; 7  相当于下标除8取余
+	以上操作是为了获取当前index开始的编码后的(最长32位)golomb数据(根据哥伦布编码的特点，实际是奇数，因此最大31位)
+	*/
+	  
+    //buf = GET_CACHE(re, gb);
+	buf = ((uint32_t) re_cache);
 
     if (buf &amp;gt;= (1 &amp;lt;&amp;lt; 27)) {
-        buf &amp;gt;&amp;gt;= 32 - 9;
-        LAST_SKIP_BITS(re, gb, ff_golomb_vlc_len[buf]);
-        CLOSE_READER(re, gb);
+		/*  
+			buf是一个int，buf大于(1 &amp;lt;&amp;lt; 27)，说明28-31位可能有1，也可能都是0
+			码长 = 2*前导0个数 + 1。因此这个判断的意思是码长小于等于9的情况下走这个分支，否则走下面
+		*/
+        buf &amp;gt;&amp;gt;= 32 - 9;//码长最长是9，因此取buf的高9位
+		
+		/*
+			码值为 00001xxxx  码长9 bit，解码结果为[15,30]；
+			码值为 0001xxx..  码长7 bit，解码结果为[7,14]
+			码值为 001xx....  码长5 bit，解码结果为[3,6]
+			码值为 01x......  码长3 bit，解码结果为[1,2]
+			码值为 1........  码长1 bit，解码结果为0      x表示0或1   .表示不属于该码的bit。
+		*/
+        //LAST_SKIP_BITS(re, gb, ff_golomb_vlc_len[buf]);
+		re_index += (ff_golomb_vlc_len[buf]);	//9位总共512种可能，事先写好一个512的数组，直接查表得到码长
+		
+        //CLOSE_READER(re, gb);
+		(gb)-&amp;gt;index = re_index
 
-        return ff_ue_golomb_vlc_code[buf];
+        return ff_ue_golomb_vlc_code[buf];		//9位总共512种可能，直接查表得到码值
     } else {
-        int log = 2 * av_log2(buf) - 31;
-        LAST_SKIP_BITS(re, gb, 32 - log);
-        CLOSE_READER(re, gb);
+        int log = 2 * av_log2(buf) - 31;		//av_log2算出bit 1的位置x  例如31的哥伦布码是00000100000...  x=26  log=21
+        //LAST_SKIP_BITS(re, gb, 32 - log);
+		re_index += (32 - log);					//码长 2*(31-x) + 1   码长=11
+        //CLOSE_READER(re, gb);
+		(gb)-&amp;gt;index = re_index;					//下标往后偏移
         if (CONFIG_FTRAPV &amp;amp;&amp;amp; log &amp;lt; 0) {
             av_log(NULL, AV_LOG_ERROR, &quot;Invalid UE golomb code\n&quot;);
             return AVERROR_INVALIDDATA;
         }
-        buf &amp;gt;&amp;gt;= log;
-        buf--;
+        buf &amp;gt;&amp;gt;= log;							//码值 = buf &amp;gt;&amp;gt; (2*x - 31)    00000100000...&amp;gt;&amp;gt;21=00000100000
+        buf--;									//解码结果 = 码值 - 1（2的k=0次方）   00000100000-1=31
 
         return buf;
     }
 }
 &lt;/pre&gt;
+
+&lt;p&gt;av_log2算出bit 1的位置暂时看到3种方法：&lt;br /&gt;
+1.使用gcc的内建函数__builtin_clz或_bit_scan_reverse，具体可以看ffmpeg的部分平台的实现&lt;br /&gt;
+2.int r = 0; while (v »= 1) r++; return r;&lt;br /&gt;
+3.如下&lt;/p&gt;
+&lt;pre&gt;
+static av_always_inline av_const int ff_log2_c(unsigned int v)
+{
+    int n = 0;
+    if (v &amp;amp; 0xffff0000) {
+        v &amp;gt;&amp;gt;= 16;
+        n += 16;
+    }
+    if (v &amp;amp; 0xff00) {
+        v &amp;gt;&amp;gt;= 8;
+        n += 8;
+    }
+    n += ff_log2_tab[v];
+
+    return n;
+}
+&lt;/pre&gt;
+&lt;p&gt;1不是所有平台都有这个内建函数。内建函数实际上对于某些平台在编译时可能就会替换成内联的一条指令&lt;br /&gt;
+没有该指令的平台可能（未验证）会使用2方法来替代&lt;br /&gt;
+2非常低效，最差情况，0x80000000需要循环32次才能得到结果&lt;br /&gt;
+3比较通用，见ffmpeg–intmath.h–ff_log2_c&lt;/p&gt;
 
 &lt;h1 id=&quot;哥伦布编码好处&quot;&gt;哥伦布编码好处&lt;/h1&gt;
 &lt;p&gt;与定长编码不同，哥伦布编码是一种变长编码。&lt;br /&gt;
@@ -943,7 +998,7 @@ ABABDAABCD的编码就是&lt;br /&gt;
 &lt;p&gt;yuv和ayuv这个暂且不谈，大小端存储也不谈。&lt;/p&gt;
 
 &lt;p&gt;=========================================&lt;/p&gt;
-&lt;h2 id=&quot;采样方式上&quot;&gt;采样方式上&lt;/h2&gt;
+&lt;h2 id=&quot;采样方式&quot;&gt;采样方式&lt;/h2&gt;
 &lt;p&gt;大致分为yuv444，yuv422，yuv420，yuv411&lt;/p&gt;
 
 &lt;p&gt;以下以3平面举例：&lt;/p&gt;
