@@ -8,6 +8,197 @@
 		
 			
 			<item>
+				<title>双线性插值缩放算法</title>
+				
+					<description>&lt;p&gt;对于一张图像的缩放，直接插值或采样缩放的话只能按2倍，3倍之类的整数倍缩放。无法做到非整数倍缩放。&lt;br /&gt;
+例如100x100的能放大到200x200或缩小到50x50，但是无法放大到150x150或75x75&lt;br /&gt;
+并且插值或采样算法有个问题，处理后图像会出现明显锯齿&lt;/p&gt;
+
+&lt;p&gt;缩放算法有很多种，此处实现一种基于c语言的最简单的双线性插值算法。&lt;br /&gt;
+线性插值的算法是这样的：&lt;br /&gt;
+首先考虑一维的图像。&lt;br /&gt;
+设放大前的座标为x，长度为l，放大后的座标为x’，长度为l’&lt;br /&gt;
+那么会满足公式x/l=x’/l’；得到x=lx’/l’&lt;br /&gt;
+对于放大后的座标x’，总能得到一个放大前的座标lx’/l’（下面称为x）。当然，x很大概率不是整数。&lt;br /&gt;
+对于原本是整数的座标，x是一个不存在的像素点，值应当是未知的。&lt;br /&gt;
+线性插值的算法是用直线来近似曲线，认为ceil(x)到ceil(x)+1的值的变化是一个一次函数&lt;br /&gt;
+因此得到x的像素值是&lt;br /&gt;
+ceil(x)座标的像素值乘上ceil(x)+1-x&lt;br /&gt;
+加上&lt;br /&gt;
+ceil(x)+1座标的像素值乘上x-ceil(x)&lt;/p&gt;
+
+&lt;p&gt;同理二维的图像，任意一个放大后的整数点，都能得到放大前的座标点(x,y)  &lt;br /&gt;
+同理一维，x和y很大概率不是整数。双线性插值的算法用(x,y)左上、右上、右下、左下四个点的像素值，通过权重计算得到一个近似值 &lt;br /&gt;
+设左上、右上、右下、左下四个区域的面积为s1,s2,s3,s4&lt;br /&gt;
+那么(x,y)的像素值是 &lt;br /&gt;
+(ceil(x), ceil(y))乘s3 加上&lt;br /&gt;
+(ceil(x)+1, ceil(y))乘s4 加上&lt;br /&gt;
+(ceil(x)+1, ceil(y)+1)乘s1 加上&lt;br /&gt;
+(ceil(x), ceil(y)+1)乘s2&lt;/p&gt;
+
+&lt;pre&gt;
+#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;unistd.h&amp;gt;
+#include &amp;lt;stdlib.h&amp;gt;
+#include &amp;lt;fcntl.h&amp;gt;
+#include &amp;lt;string.h&amp;gt;
+#include &amp;lt;sys/time.h&amp;gt;
+
+#define PRINTF(string,args...) printf(&quot;%s[%d]: &quot;string&quot;&quot;,__FUNCTION__,__LINE__,##args)
+typedef struct __pic{
+    unsigned int width;
+    unsigned int height;
+    unsigned char *pic;
+    unsigned int len;
+}stpic;
+
+
+//目标座标映射到源座标，取源座标的四个点，进行权重计算得到目标座标的像素值
+int BIpic(stpic *srcrgb24, stpic *dstrgb24)
+{
+    //目标座标
+    int x = 0;
+    int y = 0;
+
+    //目标座标在源座标区域的映射,double精度
+    double dxsrc, dysrc;
+    //上述精度的取整
+    int xsrc, ysrc;
+
+    char *srcpic = srcrgb24-&amp;gt;pic;
+
+    //abcd为目标座标在源座标区域的映射后double精度所在的座标边上的四个像素的rgb
+    unsigned char ra,rb,rc,rd;
+    unsigned char ga,gb,gc,gd;
+    unsigned char ba,bb,bc,bd;
+
+    //目标座标的rgb
+    unsigned char dstr, dstg, dstb;
+
+    char flag = 2;
+
+    for(y = 0;y &amp;lt; dstrgb24-&amp;gt;height; y++)
+    {
+        for(x = 0;x &amp;lt; dstrgb24-&amp;gt;width; x++)
+        {
+
+
+            dxsrc = (x*srcrgb24-&amp;gt;width)/(dstrgb24-&amp;gt;width*1.0);
+            dysrc = (y*srcrgb24-&amp;gt;height)/(dstrgb24-&amp;gt;height*1.0);
+
+            xsrc = (int)dxsrc;
+            ysrc = (int)dysrc;
+            if(xsrc == srcrgb24-&amp;gt;width - 1)
+            {
+                //右边缘
+                //continue;
+                dxsrc-=1.0;
+                xsrc = (int)dxsrc;
+
+            }
+            if(ysrc == srcrgb24-&amp;gt;height - 1)
+            {
+                //下边缘
+                dysrc-=1.0;
+                ysrc = (int)dysrc;
+            }
+            ra = srcpic[3*ysrc*srcrgb24-&amp;gt;width + 3*xsrc + 0];
+            ga = srcpic[3*ysrc*srcrgb24-&amp;gt;width + 3*xsrc + 1];
+            ba = srcpic[3*ysrc*srcrgb24-&amp;gt;width + 3*xsrc + 2];
+
+            rb = srcpic[3*ysrc*srcrgb24-&amp;gt;width + 3*(xsrc + 1) + 0];
+            gb = srcpic[3*ysrc*srcrgb24-&amp;gt;width + 3*(xsrc + 1) + 1];
+            bb = srcpic[3*ysrc*srcrgb24-&amp;gt;width + 3*(xsrc + 1) + 2];
+
+            rc = srcpic[3*(ysrc + 1)*srcrgb24-&amp;gt;width + 3*(xsrc + 1) + 0];
+            gc = srcpic[3*(ysrc + 1)*srcrgb24-&amp;gt;width + 3*(xsrc + 1) + 1];
+            bc = srcpic[3*(ysrc + 1)*srcrgb24-&amp;gt;width + 3*(xsrc + 1) + 2];
+
+            rd = srcpic[3*(ysrc + 1)*srcrgb24-&amp;gt;width + 3*xsrc + 0];
+            gd = srcpic[3*(ysrc + 1)*srcrgb24-&amp;gt;width + 3*xsrc + 1];
+            bd = srcpic[3*(ysrc + 1)*srcrgb24-&amp;gt;width + 3*xsrc + 2];
+
+            double s1, s2, s3, s4;
+            s1 = (dxsrc - xsrc)*(dysrc - ysrc);
+            s2 = (xsrc + 1.0 - dxsrc)*(dysrc-ysrc);
+            s3 = (xsrc + 1.0 - dxsrc)*(ysrc + 1.0 - dysrc);
+            s4 = (dxsrc - xsrc)*(ysrc + 1.0 - dysrc);
+
+            dstr = ra*s3 + rb*s4 + rc*s1 + rd*s2;
+            dstg = ga*s3 + gb*s4 + gc*s1 + gd*s2;
+            dstb = ba*s3 + bb*s4 + bc*s1 + bd*s2;
+
+            dstrgb24-&amp;gt;pic[3*y*dstrgb24-&amp;gt;width + 3*x + 0] = dstr;
+            dstrgb24-&amp;gt;pic[3*y*dstrgb24-&amp;gt;width + 3*x + 1] = dstg;
+            dstrgb24-&amp;gt;pic[3*y*dstrgb24-&amp;gt;width + 3*x + 2] = dstb;
+
+        }
+
+    }
+
+}
+
+
+int main()
+{
+    stpic srcrgb24;
+    stpic dstrgb24;
+
+    srcrgb24.width = 352;
+    srcrgb24.height = 288;
+    srcrgb24.len = srcrgb24.width*srcrgb24.height*3;
+
+    srcrgb24.pic = malloc(srcrgb24.len);
+    memset(srcrgb24.pic, 0, srcrgb24.len);
+
+    int fd = open(&quot;color.rgb&quot;, O_RDONLY);
+	if(fd &amp;lt;= 0)
+	{
+		PRINTF(&quot;open src img error\n&quot;);
+		return -1;
+	}
+    read(fd, srcrgb24.pic, srcrgb24.len);
+    close(fd);
+
+    dstrgb24.width = 1920;
+    dstrgb24.height = 1080;
+    dstrgb24.len = dstrgb24.width*dstrgb24.height*3;  
+    dstrgb24.pic = malloc(dstrgb24.len);
+	
+
+    struct timeval start,end;
+    long timeuse = 0;
+    gettimeofday(&amp;amp;start, NULL );	//计时
+
+    BIpic(&amp;amp;srcrgb24, &amp;amp;dstrgb24);
+	
+    gettimeofday(&amp;amp;end, NULL );		//计时
+    timeuse =1000000 * ( end.tv_sec - start.tv_sec ) + end.tv_usec - start.tv_usec;
+    printf(&quot;time=%f\n&quot;,timeuse /1000000.0);
+
+
+    system(&quot;rm dst.rgb&quot;);
+    fd = open(&quot;dst.rgb&quot;, O_RDWR|O_CREAT);
+    write(fd, dstrgb24.pic, dstrgb24.len);
+    close(fd);
+    system(&quot;chmod 777 dst.rgb&quot;);
+}
+&lt;/pre&gt;
+
+&lt;p&gt;当然还有很多优化方法。这里就暂时不写了。&lt;br /&gt;
+一个简单的优化就是把y座标的计算提取到内循环之外&lt;br /&gt;
+第二种优化就是把x的座标计算通过一次初始化后直接查表获取&lt;br /&gt;
+上述两种优化方式加入后，发现在我的arm开发板上效率提升了一倍多&lt;/p&gt;
+</description>
+				
+				<pubDate>Sat, 24 Mar 2018 00:00:00 +0800</pubDate>
+				<link>http://localhost:4000/%E5%8F%8C%E7%BA%BF%E6%80%A7%E6%8F%92%E5%80%BC%E7%BC%A9%E6%94%BE%E5%9B%BE%E7%89%87</link>
+				<guid isPermaLink="true">http://localhost:4000/%E5%8F%8C%E7%BA%BF%E6%80%A7%E6%8F%92%E5%80%BC%E7%BC%A9%E6%94%BE%E5%9B%BE%E7%89%87</guid>
+			</item>
+			
+		
+			
+			<item>
 				<title>reboot流程</title>
 				
 					<description>&lt;p&gt;busybox是一个常用的工具集。一般做一个嵌入式系统，文件系统上的构造，通常使用的是基于busybox的文件系统。(make menuconfig===Settings===’Installation Options’)&lt;br /&gt;

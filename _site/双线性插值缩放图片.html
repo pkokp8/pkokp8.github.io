@@ -6,7 +6,7 @@
     * Revised:        pkokp8
     -->
     <meta charset="utf-8" />
-    <title>大喷子linus? | pkokp8's blog</title>
+    <title>双线性插值缩放算法 | pkokp8's blog</title>
     <meta name="author" content="pkokp8" />
     <meta name="renderer" content="webkit">
     <meta name="description" content="Everything about pkokp8" />
@@ -54,52 +54,187 @@
 
 <div id="content">
     <div class="entry">
-        <h1 class="entry-title"><a href="/linus%E5%8F%91%E8%A8%80" title="大喷子linus?">大喷子linus?</a></h1>
-        <p class="entry-date">2018-03-15</p>
-        <ul>
-  <li>关于2018.1.2的intel cpu漏洞，linus是这么喷intel的：
-A <em>competent</em> CPU engineer would fix this by making sure speculation<br />
-doesn’t happen across protection domains. Maybe even a L1 I$ that is<br />
-keyed by CPL.</li>
-</ul>
+        <h1 class="entry-title"><a href="/%E5%8F%8C%E7%BA%BF%E6%80%A7%E6%8F%92%E5%80%BC%E7%BC%A9%E6%94%BE%E5%9B%BE%E7%89%87" title="双线性插值缩放算法">双线性插值缩放算法</a></h1>
+        <p class="entry-date">2018-03-24</p>
+        <p>对于一张图像的缩放，直接插值或采样缩放的话只能按2倍，3倍之类的整数倍缩放。无法做到非整数倍缩放。<br />
+例如100x100的能放大到200x200或缩小到50x50，但是无法放大到150x150或75x75<br />
+并且插值或采样算法有个问题，处理后图像会出现明显锯齿</p>
 
-<p>I think somebody inside of Intel needs to really take a long hard look<br />
-at their CPU’s, and actually admit that they have issues instead of<br />
-writing PR blurbs that say that everything works as designed.</p>
+<p>缩放算法有很多种，此处实现一种基于c语言的最简单的双线性插值算法。<br />
+线性插值的算法是这样的：<br />
+首先考虑一维的图像。<br />
+设放大前的座标为x，长度为l，放大后的座标为x’，长度为l’<br />
+那么会满足公式x/l=x’/l’；得到x=lx’/l’<br />
+对于放大后的座标x’，总能得到一个放大前的座标lx’/l’（下面称为x）。当然，x很大概率不是整数。<br />
+对于原本是整数的座标，x是一个不存在的像素点，值应当是未知的。<br />
+线性插值的算法是用直线来近似曲线，认为ceil(x)到ceil(x)+1的值的变化是一个一次函数<br />
+因此得到x的像素值是<br />
+ceil(x)座标的像素值乘上ceil(x)+1-x<br />
+加上<br />
+ceil(x)+1座标的像素值乘上x-ceil(x)</p>
 
-<p>.. and that really means that all these mitigation patches should be<br />
-written with “not all CPU’s are crap” in mind.</p>
+<p>同理二维的图像，任意一个放大后的整数点，都能得到放大前的座标点(x,y)  <br />
+同理一维，x和y很大概率不是整数。双线性插值的算法用(x,y)左上、右上、右下、左下四个点的像素值，通过权重计算得到一个近似值 <br />
+设左上、右上、右下、左下四个区域的面积为s1,s2,s3,s4<br />
+那么(x,y)的像素值是 <br />
+(ceil(x), ceil(y))乘s3 加上<br />
+(ceil(x)+1, ceil(y))乘s4 加上<br />
+(ceil(x)+1, ceil(y)+1)乘s1 加上<br />
+(ceil(x), ceil(y)+1)乘s2</p>
 
-<p>Or is Intel basically saying “we are committed to selling you shit<br />
-forever and ever, and never fixing anything”?</p>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;string.h&gt;
+#include &lt;sys/time.h&gt;
 
-<p>Because if that’s the case, maybe we should start looking towards the<br />
-ARM64 people more.</p>
+#define PRINTF(string,args...) printf("%s[%d]: "string"",__FUNCTION__,__LINE__,##args)
+typedef struct __pic{
+    unsigned int width;
+    unsigned int height;
+    unsigned char *pic;
+    unsigned int len;
+}stpic;
 
-<p>Please talk to management. Because I really see exactly two possibibilities:</p>
 
-<ul>
-  <li>Intel never intends to fix anything</li>
-</ul>
+//目标座标映射到源座标，取源座标的四个点，进行权重计算得到目标座标的像素值
+int BIpic(stpic *srcrgb24, stpic *dstrgb24)
+{
+    //目标座标
+    int x = 0;
+    int y = 0;
 
-<p>OR</p>
+    //目标座标在源座标区域的映射,double精度
+    double dxsrc, dysrc;
+    //上述精度的取整
+    int xsrc, ysrc;
 
-<ul>
-  <li>these workarounds should have a way to disable them.</li>
-</ul>
+    char *srcpic = srcrgb24-&gt;pic;
 
-<p>Which of the two is it?</p>
+    //abcd为目标座标在源座标区域的映射后double精度所在的座标边上的四个像素的rgb
+    unsigned char ra,rb,rc,rd;
+    unsigned char ga,gb,gc,gd;
+    unsigned char ba,bb,bc,bd;
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>               Linus  
-</code></pre></div></div>
+    //目标座标的rgb
+    unsigned char dstr, dstg, dstb;
 
-<ul>
-  <li>关于3.13AMD RYZEN漏洞，linus是这么喷的：<br />
-It looks like the IT security world has hit a new low.If you work in security, and think you have some morals, I think you might want to add the tag-line   “No, really, I’m not a whore. Pinky promise”to your business card. Because I thought the whole industry was corrupt before, but it’s getting ridiculous.At what point will security people admit they have an attention-whoring problem?</li>
-</ul>
+    char flag = 2;
 
-<p>恩，又学到了一个单词，pinky promise。。。哈哈哈，拉小拇指保证。<br />
-这漏洞的执行环境有点苛刻，需要管理员权限。有管理员权限不说砸了主机，格式化一下硬盘也不是问题啊。并且刚发现就爆出来了，感觉背后和友商有不可告人的。。。交易。</p>
+    for(y = 0;y &lt; dstrgb24-&gt;height; y++)
+    {
+        for(x = 0;x &lt; dstrgb24-&gt;width; x++)
+        {
+
+
+            dxsrc = (x*srcrgb24-&gt;width)/(dstrgb24-&gt;width*1.0);
+            dysrc = (y*srcrgb24-&gt;height)/(dstrgb24-&gt;height*1.0);
+
+            xsrc = (int)dxsrc;
+            ysrc = (int)dysrc;
+            if(xsrc == srcrgb24-&gt;width - 1)
+            {
+                //右边缘
+                //continue;
+                dxsrc-=1.0;
+                xsrc = (int)dxsrc;
+
+            }
+            if(ysrc == srcrgb24-&gt;height - 1)
+            {
+                //下边缘
+                dysrc-=1.0;
+                ysrc = (int)dysrc;
+            }
+            ra = srcpic[3*ysrc*srcrgb24-&gt;width + 3*xsrc + 0];
+            ga = srcpic[3*ysrc*srcrgb24-&gt;width + 3*xsrc + 1];
+            ba = srcpic[3*ysrc*srcrgb24-&gt;width + 3*xsrc + 2];
+
+            rb = srcpic[3*ysrc*srcrgb24-&gt;width + 3*(xsrc + 1) + 0];
+            gb = srcpic[3*ysrc*srcrgb24-&gt;width + 3*(xsrc + 1) + 1];
+            bb = srcpic[3*ysrc*srcrgb24-&gt;width + 3*(xsrc + 1) + 2];
+
+            rc = srcpic[3*(ysrc + 1)*srcrgb24-&gt;width + 3*(xsrc + 1) + 0];
+            gc = srcpic[3*(ysrc + 1)*srcrgb24-&gt;width + 3*(xsrc + 1) + 1];
+            bc = srcpic[3*(ysrc + 1)*srcrgb24-&gt;width + 3*(xsrc + 1) + 2];
+
+            rd = srcpic[3*(ysrc + 1)*srcrgb24-&gt;width + 3*xsrc + 0];
+            gd = srcpic[3*(ysrc + 1)*srcrgb24-&gt;width + 3*xsrc + 1];
+            bd = srcpic[3*(ysrc + 1)*srcrgb24-&gt;width + 3*xsrc + 2];
+
+            double s1, s2, s3, s4;
+            s1 = (dxsrc - xsrc)*(dysrc - ysrc);
+            s2 = (xsrc + 1.0 - dxsrc)*(dysrc-ysrc);
+            s3 = (xsrc + 1.0 - dxsrc)*(ysrc + 1.0 - dysrc);
+            s4 = (dxsrc - xsrc)*(ysrc + 1.0 - dysrc);
+
+            dstr = ra*s3 + rb*s4 + rc*s1 + rd*s2;
+            dstg = ga*s3 + gb*s4 + gc*s1 + gd*s2;
+            dstb = ba*s3 + bb*s4 + bc*s1 + bd*s2;
+
+            dstrgb24-&gt;pic[3*y*dstrgb24-&gt;width + 3*x + 0] = dstr;
+            dstrgb24-&gt;pic[3*y*dstrgb24-&gt;width + 3*x + 1] = dstg;
+            dstrgb24-&gt;pic[3*y*dstrgb24-&gt;width + 3*x + 2] = dstb;
+
+        }
+
+    }
+
+}
+
+
+int main()
+{
+    stpic srcrgb24;
+    stpic dstrgb24;
+
+    srcrgb24.width = 352;
+    srcrgb24.height = 288;
+    srcrgb24.len = srcrgb24.width*srcrgb24.height*3;
+
+    srcrgb24.pic = malloc(srcrgb24.len);
+    memset(srcrgb24.pic, 0, srcrgb24.len);
+
+    int fd = open("color.rgb", O_RDONLY);
+	if(fd &lt;= 0)
+	{
+		PRINTF("open src img error\n");
+		return -1;
+	}
+    read(fd, srcrgb24.pic, srcrgb24.len);
+    close(fd);
+
+    dstrgb24.width = 1920;
+    dstrgb24.height = 1080;
+    dstrgb24.len = dstrgb24.width*dstrgb24.height*3;  
+    dstrgb24.pic = malloc(dstrgb24.len);
+	
+
+    struct timeval start,end;
+    long timeuse = 0;
+    gettimeofday(&amp;start, NULL );	//计时
+
+    BIpic(&amp;srcrgb24, &amp;dstrgb24);
+	
+    gettimeofday(&amp;end, NULL );		//计时
+    timeuse =1000000 * ( end.tv_sec - start.tv_sec ) + end.tv_usec - start.tv_usec;
+    printf("time=%f\n",timeuse /1000000.0);
+
+
+    system("rm dst.rgb");
+    fd = open("dst.rgb", O_RDWR|O_CREAT);
+    write(fd, dstrgb24.pic, dstrgb24.len);
+    close(fd);
+    system("chmod 777 dst.rgb");
+}
+</pre>
+
+<p>当然还有很多优化方法。这里就暂时不写了。<br />
+一个简单的优化就是把y座标的计算提取到内循环之外<br />
+第二种优化就是把x的座标计算通过一次初始化后直接查表获取<br />
+上述两种优化方式加入后，发现在我的arm开发板上效率提升了一倍多</p>
 
         <div id="disqus_container">
             <class="comment"/>
