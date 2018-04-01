@@ -30,7 +30,7 @@ ceil(x)+1座标的像素值乘上x-ceil(x)&lt;/p&gt;
 &lt;p&gt;同理二维的图像，任意一个放大后的整数点，都能得到放大前的座标点(x,y)  &lt;br /&gt;
 同理一维，x和y很大概率不是整数。双线性插值的算法用(x,y)左上、右上、右下、左下四个点的像素值，通过权重计算得到一个近似值 &lt;br /&gt;
 设左上、右上、右下、左下四个区域的面积为s1,s2,s3,s4&lt;br /&gt;
-那么(x,y)的像素值是 &lt;br /&gt;
+那么(x,y)的近似像素值是 &lt;br /&gt;
 (ceil(x), ceil(y))乘s3 加上&lt;br /&gt;
 (ceil(x)+1, ceil(y))乘s4 加上&lt;br /&gt;
 (ceil(x)+1, ceil(y)+1)乘s1 加上&lt;br /&gt;
