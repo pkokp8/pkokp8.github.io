@@ -8,6 +8,44 @@
 		
 			
 			<item>
+				<title>uip移植记录</title>
+				
+					<description>&lt;p&gt;uip是什么:&lt;br /&gt;
+uip协议栈是一个简化的tcp/ip协议，去除了一些不常用的功能。uip是一种协议框架，在这个框架上可以实现许许多多的功能，例如http服务端，smtp客户端，telnet服务端等等等等。&lt;/p&gt;
+
+&lt;p&gt;uip源码路径：&lt;br /&gt;
+https://github.com/adamdunkels/uip&lt;/p&gt;
+
+&lt;p&gt;移植参考：&lt;br /&gt;
+https://codeload.github.com/pepe2k/u-boot_mod/&lt;/p&gt;
+
+&lt;p&gt;如何移植：&lt;br /&gt;
+先占个坑，慢慢补充。&lt;br /&gt;
+测试一点git内容&lt;/p&gt;
+
+</description>
+				
+				<pubDate>Mon, 02 Apr 2018 00:00:00 +0800</pubDate>
+				<link>http://localhost:4000/uip%E7%A7%BB%E6%A4%8D%E8%AE%B0%E5%BD%95</link>
+				<guid isPermaLink="true">http://localhost:4000/uip%E7%A7%BB%E6%A4%8D%E8%AE%B0%E5%BD%95</guid>
+			</item>
+			
+		
+			
+			<item>
+				<title>4月1日日记</title>
+				
+					<description>&lt;p&gt;悲崔的一天。出门骑车，锁上车后发现钥匙没带，明天还要用。2公里的路，是回家拿钥匙好呢，还是拖着后轮不能动的车回家呢？我选择了后者，好重，手废了。。。&lt;/p&gt;
+</description>
+				
+				<pubDate>Sun, 01 Apr 2018 00:00:00 +0800</pubDate>
+				<link>http://localhost:4000/%E6%97%A5%E8%AE%B0</link>
+				<guid isPermaLink="true">http://localhost:4000/%E6%97%A5%E8%AE%B0</guid>
+			</item>
+			
+		
+			
+			<item>
 				<title>双线性插值缩放算法</title>
 				
 					<description>&lt;p&gt;对于一张图像的缩放，直接插值或采样缩放的话只能按2倍，3倍之类的整数倍缩放。无法做到非整数倍缩放。&lt;br /&gt;
@@ -1960,20 +1998,18 @@ jpeg_abort很奇怪的位于jcomapi.c中&lt;/p&gt;
 			<item>
 				<title>git的简单操作</title>
 				
-					<description>&lt;p&gt;
-  记录一下git的使用。系统是ubuntu16.04. 安装好git环境  
-  首先在github上右上角点一下+，然后New repository。  
-  也可以本地创建好后push上去，不过这样也挺方便的。初学者嘛
-&lt;/p&gt;
+					<description>&lt;p&gt;记录一下git的使用。系统是ubuntu16.04. 安装好git环境&lt;/p&gt;
 
-&lt;p&gt;
-  然后是clone一个master，例如刚才创建的pkokp8.github.io.git分支
-&lt;/p&gt;
+&lt;h2 id=&quot;创建一个仓库&quot;&gt;创建一个仓库&lt;/h2&gt;
+&lt;p&gt;在github上右上角点一下+，然后New repository。&lt;br /&gt;
+也可以本地创建好后push上去，不过这样也挺方便的。初学者嘛&lt;/p&gt;
+
+&lt;h2 id=&quot;clone一份仓库&quot;&gt;clone一份仓库&lt;/h2&gt;
 &lt;pre&gt;
 # git clone https://github.com/pkokp8/pkokp8.github.io.git
 &lt;/pre&gt;
 
-&lt;p&gt;接着就可以修改、提交文件&lt;/p&gt;
+&lt;h2 id=&quot;修改提交文件&quot;&gt;修改、提交文件&lt;/h2&gt;
 &lt;pre&gt;
 # echo &quot;# test info&quot; &amp;gt;&amp;gt; README.md           #新建README.md
 # git add .                                 #本地仓库新增这个文件
@@ -1981,19 +2017,35 @@ jpeg_abort很奇怪的位于jcomapi.c中&lt;/p&gt;
 # git push -u origin master                 #push到远程主线。
 &lt;/pre&gt;
 
-&lt;p&gt;
-  此时可能因为没有用户名和密码，会提示错误。可以配置后再执行上述命令
-&lt;/p&gt;
-
+&lt;p&gt;此时可能因为没有用户名和密码，会提示错误。可以配置后再执行上述命令&lt;/p&gt;
 &lt;pre&gt;
 # git config --global user.name &quot;pkokp8&quot;
-# git config --global user.email &quot;xxx@xx.com&quot;
+# git config --global user.email &quot;xboxtwo@163.com&quot;
 &lt;/pre&gt;
 
-&lt;p&gt;
-  查看本地的提交记录，简单的可以使用。配合reset可以回退版本。注意-hard会把本地修改覆盖掉。  
-  类似svn的svn revert ./ -R;svn up -r xxx
-&lt;/p&gt;
+&lt;p&gt;类似svn，git也可以使用vim编辑提交日志&lt;/p&gt;
+&lt;pre&gt;
+[root@github]# vim ~/.gitconfig 
+  1 [user]
+  2     name = pkokp8
+  3     email = xboxtwo@163.com
+  4 [core]                                                                                                                                                              
+  5     editor = vim
+~                             
+#保存退出              
+[root@github]# git commit   #不加-m &quot;commit log&quot;参数可以进入vim编辑环境，默认的编辑环境不适应
+[master 33ebad0] 测试一下使用vim提交git修改
+ 3 files changed, 10 insertions(+), 2 deletions(-)
+ create mode 100644 &quot;_posts/dump/2018-04-01-\346\227\245\350\256\260.md&quot;
+&lt;/pre&gt;
+&lt;p&gt;也可以使用这条命令配置编辑器为vim&lt;/p&gt;
+&lt;pre&gt;
+[root@github]# git config --global core.editor vim
+&lt;/pre&gt;
+
+&lt;h2 id=&quot;查看提交记录&quot;&gt;查看提交记录&lt;/h2&gt;
+&lt;p&gt;配合reset可以回退版本。注意-hard会把本地修改覆盖掉。&lt;br /&gt;
+类似svn的svn revert ./ -R;svn up -r xxx&lt;/p&gt;
 &lt;pre&gt;
 # git log
 commit af17a9f424c5da5b4b06f90e69eb069f89124e40
@@ -2005,9 +2057,26 @@ Date:   Thu Mar 1 00:23:55 2018 +0800
 # git reset -hard af17a9f424c5da5b4b06f90e69eb069f89124e40 
 &lt;/pre&gt;
 
-&lt;p&gt;
-  接着就可以创建分支了：
-&lt;/p&gt;
+&lt;p&gt;通过-p -2参数可以显示提交差异以及2次&lt;/p&gt;
+&lt;pre&gt;
+[root@u-boot]# git log -p -2
+commit 81cf7c8d45935a295991fe2cd1df286f0f47511f
+Merge: 2dc5165 c0ce4ce
+Author: Tom Rini &amp;lt;trini@konsulko.com&amp;gt;
+Date:   Sun Mar 25 12:02:13 2018 -0400
+
+    Merge git://git.denx.de/u-boot-ubi
+
+commit 2dc5165ee04dedfa88ebc9fc79c29bd56a54681d
+Merge: f7c9e76 63018a3
+Author: Tom Rini &amp;lt;trini@konsulko.com&amp;gt;
+Date:   Sun Mar 25 12:01:44 2018 -0400
+
+    Merge git://git.denx.de/u-boot-spi
+
+&lt;/pre&gt;
+
+&lt;p&gt;接着就可以创建分支了：&lt;/p&gt;
 &lt;pre&gt;
 # git branch firstversion                   #创建名为firstversion的分支
 # git checkout firstversion                 #切换到这个分支
@@ -2019,14 +2088,79 @@ Date:   Thu Mar 1 00:23:55 2018 +0800
 # git diff                                  #查看本地与本地仓库之间的差异
 &lt;/pre&gt;
 
-&lt;p&gt;
-  暂时就用到这么多。我感觉我还是要学习一个
-&lt;/p&gt;
+&lt;h2 id=&quot;查看本地修改记录&quot;&gt;查看本地修改记录&lt;/h2&gt;
+&lt;pre&gt;
+[root@u-boot]# git diff
+diff --git a/arch/arm/config.mk b/arch/arm/config.mk
+index 9c213b8..7094018 100644
+--- a/arch/arm/config.mk
++++ b/arch/arm/config.mk
+@@ -67,7 +67,7 @@ endif
+ 
+ checkgcc6:
+        @if test &quot;$(call cc-name)&quot; = &quot;gcc&quot; -a \
+-                       &quot;$(call cc-version)&quot; -lt &quot;0600&quot;; then \
++                       &quot;$(call cc-version)&quot; -lt &quot;0400&quot;; then \
+                echo '*** Your GCC is older than 6.0 and is not supported'; \
+                false; \
+        fi
+&lt;/pre&gt;
+
+&lt;p&gt;如果修改非常多，可以只看文件列表不看具体修改&lt;/p&gt;
+&lt;pre&gt;
+[root@u-boot]# git diff --stat
+ arch/arm/config.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+&lt;/pre&gt;
+
+&lt;h2 id=&quot;每次输入用户名密码都非常麻烦&quot;&gt;每次输入用户名密码都非常麻烦&lt;/h2&gt;
+&lt;p&gt;可以添加一个ssh key来免除用户名(密码)的输入&lt;br /&gt;
+首先进入cd ~/.ssh&lt;br /&gt;
+如果没有这个目录，创建一个&lt;br /&gt;
+执行ssh-keygen -t rsa -C “your_email@example.com”&lt;br /&gt;
+例如我会执行&lt;/p&gt;
+&lt;pre&gt;
+ssh-keygen -t rsa -C &quot;xboxtwo@163.com&quot;
+&lt;/pre&gt;
+&lt;p&gt;如果需要之后提交时输入密码，在提示“Enter passphrase (empty for no passphrase):”之类的信息时输入密码&lt;br /&gt;
+否则直接回车表示无需密码&lt;br /&gt;
+然后shell下执行下面的命令或打开这个“~/.ssh/id_rsa.pub”文件&lt;/p&gt;
+&lt;pre&gt;
+cat ~/.ssh/id_rsa.pub
+&lt;/pre&gt;
+&lt;p&gt;将内容复制出来到https://github.com/settings/keys，点击New SSH key。title随便填，key输入刚才的内容，点击Add SSH key&lt;br /&gt;
+继续shell执行&lt;/p&gt;
+&lt;pre&gt;
+ssh -T git@github.com
+&lt;/pre&gt;
+&lt;p&gt;提示“Are you sure you want to continue connecting (yes/no)?”时输入yes&lt;br /&gt;
+如果继续提示需要输入密码，则表示提交代码时会要求密码，否则就直接打印&lt;/p&gt;
+&lt;pre&gt;
+Warning: Permanently added 'github.com,52.74.223.119' (RSA) to the list of known hosts.
+Hi pkokp8! You've successfully authenticated, but GitHub does not provide shell access.
+&lt;/pre&gt;
+&lt;p&gt;之后git push -u origin master之类的就无需密码了。&lt;br /&gt;
+如果依然需要密码，可能是因为之前clone的代码的url是https的，修改&lt;br /&gt;
+https://github.com/usrname/project.git&lt;br /&gt;
+为&lt;br /&gt;
+git@github.com:usrname/project.git&lt;br /&gt;
+例如：&lt;/p&gt;
+&lt;pre&gt;
+[root@github]$ cat .git/config 
+...
+[remote &quot;origin&quot;]
+#	url = https://github.com/pkokp8/pkokp8.github.io.git  #注释这一行，改为下面这一行
+	url = git@github.com:pkokp8/pkokp8.github.io.git
+...
+&lt;/pre&gt;
+&lt;p&gt;ok，之后就无需密码啦&lt;/p&gt;
+
+&lt;p&gt;暂时就用到这么多&lt;/p&gt;
 </description>
 				
 				<pubDate>Thu, 01 Mar 2018 00:00:00 +0800</pubDate>
-				<link>http://localhost:4000/git-simple-use</link>
-				<guid isPermaLink="true">http://localhost:4000/git-simple-use</guid>
+				<link>http://localhost:4000/git%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8</link>
+				<guid isPermaLink="true">http://localhost:4000/git%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8</guid>
 			</item>
 			
 		

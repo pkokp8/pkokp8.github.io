@@ -6,7 +6,7 @@
     * Revised:        pkokp8
     -->
     <meta charset="utf-8" />
-    <title>git的简单操作 | pkokp8's blog</title>
+    <title>uip移植记录 | pkokp8's blog</title>
     <meta name="author" content="pkokp8" />
     <meta name="renderer" content="webkit">
     <meta name="description" content="Everything about pkokp8" />
@@ -54,70 +54,21 @@
 
 <div id="content">
     <div class="entry">
-        <h1 class="entry-title"><a href="/git-simple-use" title="git的简单操作">git的简单操作</a></h1>
-        <p class="entry-date">2018-03-01</p>
-        <p>
-  记录一下git的使用。系统是ubuntu16.04. 安装好git环境  
-  首先在github上右上角点一下+，然后New repository。  
-  也可以本地创建好后push上去，不过这样也挺方便的。初学者嘛
-</p>
+        <h1 class="entry-title"><a href="/uip%E7%A7%BB%E6%A4%8D%E8%AE%B0%E5%BD%95" title="uip移植记录">uip移植记录</a></h1>
+        <p class="entry-date">2018-04-02</p>
+        <p>uip是什么:<br />
+uip协议栈是一个简化的tcp/ip协议，去除了一些不常用的功能。uip是一种协议框架，在这个框架上可以实现许许多多的功能，例如http服务端，smtp客户端，telnet服务端等等等等。</p>
 
-<p>
-  然后是clone一个master，例如刚才创建的pkokp8.github.io.git分支
-</p>
-<pre>
-# git clone https://github.com/pkokp8/pkokp8.github.io.git
-</pre>
+<p>uip源码路径：<br />
+https://github.com/adamdunkels/uip</p>
 
-<p>接着就可以修改、提交文件</p>
-<pre>
-# echo "# test info" &gt;&gt; README.md           #新建README.md
-# git add .                                 #本地仓库新增这个文件
-# git commit -m "commit the readme"         #提交到本地，日志为-m后面""内的字符串。万一commit错误，可以不进行下一步，直接使用reset来回退代码，这样远端就不会有这次commit的记录
-# git push -u origin master                 #push到远程主线。
-</pre>
+<p>移植参考：<br />
+https://codeload.github.com/pepe2k/u-boot_mod/</p>
 
-<p>
-  此时可能因为没有用户名和密码，会提示错误。可以配置后再执行上述命令
-</p>
+<p>如何移植：<br />
+先占个坑，慢慢补充。<br />
+测试一点git内容</p>
 
-<pre>
-# git config --global user.name "pkokp8"
-# git config --global user.email "xxx@xx.com"
-</pre>
-
-<p>
-  查看本地的提交记录，简单的可以使用。配合reset可以回退版本。注意-hard会把本地修改覆盖掉。  
-  类似svn的svn revert ./ -R;svn up -r xxx
-</p>
-<pre>
-# git log
-commit af17a9f424c5da5b4b06f90e69eb069f89124e40
-Author: pkokp8 &lt;xxx@xx.com&gt;
-Date:   Thu Mar 1 00:23:55 2018 +0800
-
-    modify readme
-
-# git reset -hard af17a9f424c5da5b4b06f90e69eb069f89124e40 
-</pre>
-
-<p>
-  接着就可以创建分支了：
-</p>
-<pre>
-# git branch firstversion                   #创建名为firstversion的分支
-# git checkout firstversion                 #切换到这个分支
-# git push -u origin firstversion           #把这个分支push到远端
-# git checkout master                       #切换回主线
-# git branch                                #查看当前处于哪条分支（看*），以及存在哪些分支
-  firstversion
-* master
-# git diff                                  #查看本地与本地仓库之间的差异
-</pre>
-
-<p>
-  暂时就用到这么多。我感觉我还是要学习一个
-</p>
 
         <div id="disqus_container">
             <class="comment"/>
@@ -153,6 +104,8 @@ Date:   Thu Mar 1 00:23:55 2018 +0800
         <h2>Blog</h2>
         <ul class="artical-list">
         
+            <li><a href="/uip%E7%A7%BB%E6%A4%8D%E8%AE%B0%E5%BD%95">uip移植记录</a></li>
+        
             <li><a href="/%E5%8F%8C%E7%BA%BF%E6%80%A7%E6%8F%92%E5%80%BC%E7%BC%A9%E6%94%BE%E5%9B%BE%E7%89%87">双线性插值缩放算法</a></li>
         
             <li><a href="/busybox-reboot">reboot流程</a></li>
@@ -175,7 +128,7 @@ Date:   Thu Mar 1 00:23:55 2018 +0800
         
             <li><a href="/libjpeg-decode-c">libjpeg解码篇</a></li>
         
-            <li><a href="/git-simple-use">git的简单操作</a></li>
+            <li><a href="/git%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8">git的简单操作</a></li>
         
             <li><a href="/python%E7%88%AC%E8%99%AB">python爬虫</a></li>
         
@@ -185,6 +138,8 @@ Date:   Thu Mar 1 00:23:55 2018 +0800
 
         <h2>Dump</h2>
         <ul class="artical-list">
+        
+            <li><a href="/%E6%97%A5%E8%AE%B0">4月1日日记</a></li>
         
             <li><a href="/linus%E5%8F%91%E8%A8%80">大喷子linus?</a></li>
         

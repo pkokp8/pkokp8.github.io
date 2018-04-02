@@ -6,7 +6,7 @@
     * Revised:        pkokp8
     -->
     <meta charset="utf-8" />
-    <title>pass | pkokp8's blog</title>
+    <title>git的简单操作 | pkokp8's blog</title>
     <meta name="author" content="pkokp8" />
     <meta name="renderer" content="webkit">
     <meta name="description" content="Everything about pkokp8" />
@@ -54,9 +54,166 @@
 
 <div id="content">
     <div class="entry">
-        <h1 class="entry-title"><a href="/test1-test2-test3" title="pass">pass</a></h1>
-        <p class="entry-date">2011-01-01</p>
-        <p>;</p>
+        <h1 class="entry-title"><a href="/git%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8" title="git的简单操作">git的简单操作</a></h1>
+        <p class="entry-date">2018-03-01</p>
+        <p>记录一下git的使用。系统是ubuntu16.04. 安装好git环境</p>
+
+<h2 id="创建一个仓库">创建一个仓库</h2>
+<p>在github上右上角点一下+，然后New repository。<br />
+也可以本地创建好后push上去，不过这样也挺方便的。初学者嘛</p>
+
+<h2 id="clone一份仓库">clone一份仓库</h2>
+<pre>
+# git clone https://github.com/pkokp8/pkokp8.github.io.git
+</pre>
+
+<h2 id="修改提交文件">修改、提交文件</h2>
+<pre>
+# echo "# test info" &gt;&gt; README.md           #新建README.md
+# git add .                                 #本地仓库新增这个文件
+# git commit -m "commit the readme"         #提交到本地，日志为-m后面""内的字符串。万一commit错误，可以不进行下一步，直接使用reset来回退代码，这样远端就不会有这次commit的记录
+# git push -u origin master                 #push到远程主线。
+</pre>
+
+<p>此时可能因为没有用户名和密码，会提示错误。可以配置后再执行上述命令</p>
+<pre>
+# git config --global user.name "pkokp8"
+# git config --global user.email "xboxtwo@163.com"
+</pre>
+
+<p>类似svn，git也可以使用vim编辑提交日志</p>
+<pre>
+[root@github]# vim ~/.gitconfig 
+  1 [user]
+  2     name = pkokp8
+  3     email = xboxtwo@163.com
+  4 [core]                                                                                                                                                              
+  5     editor = vim
+~                             
+#保存退出              
+[root@github]# git commit   #不加-m "commit log"参数可以进入vim编辑环境，默认的编辑环境不适应
+[master 33ebad0] 测试一下使用vim提交git修改
+ 3 files changed, 10 insertions(+), 2 deletions(-)
+ create mode 100644 "_posts/dump/2018-04-01-\346\227\245\350\256\260.md"
+</pre>
+<p>也可以使用这条命令配置编辑器为vim</p>
+<pre>
+[root@github]# git config --global core.editor vim
+</pre>
+
+<h2 id="查看提交记录">查看提交记录</h2>
+<p>配合reset可以回退版本。注意-hard会把本地修改覆盖掉。<br />
+类似svn的svn revert ./ -R;svn up -r xxx</p>
+<pre>
+# git log
+commit af17a9f424c5da5b4b06f90e69eb069f89124e40
+Author: pkokp8 &lt;xxx@xx.com&gt;
+Date:   Thu Mar 1 00:23:55 2018 +0800
+
+    modify readme
+
+# git reset -hard af17a9f424c5da5b4b06f90e69eb069f89124e40 
+</pre>
+
+<p>通过-p -2参数可以显示提交差异以及2次</p>
+<pre>
+[root@u-boot]# git log -p -2
+commit 81cf7c8d45935a295991fe2cd1df286f0f47511f
+Merge: 2dc5165 c0ce4ce
+Author: Tom Rini &lt;trini@konsulko.com&gt;
+Date:   Sun Mar 25 12:02:13 2018 -0400
+
+    Merge git://git.denx.de/u-boot-ubi
+
+commit 2dc5165ee04dedfa88ebc9fc79c29bd56a54681d
+Merge: f7c9e76 63018a3
+Author: Tom Rini &lt;trini@konsulko.com&gt;
+Date:   Sun Mar 25 12:01:44 2018 -0400
+
+    Merge git://git.denx.de/u-boot-spi
+
+</pre>
+
+<p>接着就可以创建分支了：</p>
+<pre>
+# git branch firstversion                   #创建名为firstversion的分支
+# git checkout firstversion                 #切换到这个分支
+# git push -u origin firstversion           #把这个分支push到远端
+# git checkout master                       #切换回主线
+# git branch                                #查看当前处于哪条分支（看*），以及存在哪些分支
+  firstversion
+* master
+# git diff                                  #查看本地与本地仓库之间的差异
+</pre>
+
+<h2 id="查看本地修改记录">查看本地修改记录</h2>
+<pre>
+[root@u-boot]# git diff
+diff --git a/arch/arm/config.mk b/arch/arm/config.mk
+index 9c213b8..7094018 100644
+--- a/arch/arm/config.mk
++++ b/arch/arm/config.mk
+@@ -67,7 +67,7 @@ endif
+ 
+ checkgcc6:
+        @if test "$(call cc-name)" = "gcc" -a \
+-                       "$(call cc-version)" -lt "0600"; then \
++                       "$(call cc-version)" -lt "0400"; then \
+                echo '*** Your GCC is older than 6.0 and is not supported'; \
+                false; \
+        fi
+</pre>
+
+<p>如果修改非常多，可以只看文件列表不看具体修改</p>
+<pre>
+[root@u-boot]# git diff --stat
+ arch/arm/config.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+</pre>
+
+<h2 id="每次输入用户名密码都非常麻烦">每次输入用户名密码都非常麻烦</h2>
+<p>可以添加一个ssh key来免除用户名(密码)的输入<br />
+首先进入cd ~/.ssh<br />
+如果没有这个目录，创建一个<br />
+执行ssh-keygen -t rsa -C “your_email@example.com”<br />
+例如我会执行</p>
+<pre>
+ssh-keygen -t rsa -C "xboxtwo@163.com"
+</pre>
+<p>如果需要之后提交时输入密码，在提示“Enter passphrase (empty for no passphrase):”之类的信息时输入密码<br />
+否则直接回车表示无需密码<br />
+然后shell下执行下面的命令或打开这个“~/.ssh/id_rsa.pub”文件</p>
+<pre>
+cat ~/.ssh/id_rsa.pub
+</pre>
+<p>将内容复制出来到https://github.com/settings/keys，点击New SSH key。title随便填，key输入刚才的内容，点击Add SSH key<br />
+继续shell执行</p>
+<pre>
+ssh -T git@github.com
+</pre>
+<p>提示“Are you sure you want to continue connecting (yes/no)?”时输入yes<br />
+如果继续提示需要输入密码，则表示提交代码时会要求密码，否则就直接打印</p>
+<pre>
+Warning: Permanently added 'github.com,52.74.223.119' (RSA) to the list of known hosts.
+Hi pkokp8! You've successfully authenticated, but GitHub does not provide shell access.
+</pre>
+<p>之后git push -u origin master之类的就无需密码了。<br />
+如果依然需要密码，可能是因为之前clone的代码的url是https的，修改<br />
+https://github.com/usrname/project.git<br />
+为<br />
+git@github.com:usrname/project.git<br />
+例如：</p>
+<pre>
+[root@github]$ cat .git/config 
+...
+[remote "origin"]
+#	url = https://github.com/pkokp8/pkokp8.github.io.git  #注释这一行，改为下面这一行
+	url = git@github.com:pkokp8/pkokp8.github.io.git
+...
+</pre>
+<p>ok，之后就无需密码啦</p>
+
+<p>暂时就用到这么多</p>
 
         <div id="disqus_container">
             <class="comment"/>
